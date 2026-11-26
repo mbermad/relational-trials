@@ -59,6 +59,7 @@ class RDLModel(torch.nn.Module):
                  dropout: float = 0.0):
         super().__init__()
         self.dropout = dropout
+        self.arch = arch
         self.encoder = HeteroEncoder(
             channels=channels,
             node_to_col_names_dict={nt: data[nt].tf.col_names_dict for nt in data.node_types},
@@ -103,8 +104,11 @@ class RDLModel(torch.nn.Module):
             x_dict[nt] = x_dict[nt] + rt
         if self.dropout:
             x_dict = {k: F.dropout(v, self.dropout, self.training) for k, v in x_dict.items()}
-        x_dict = self.gnn(x_dict, batch.edge_index_dict, batch.num_sampled_nodes_dict,
-                          batch.num_sampled_edges_dict)
+        if self.arch == "sage":
+            x_dict = self.gnn(x_dict, batch.edge_index_dict, batch.num_sampled_nodes_dict,
+                              batch.num_sampled_edges_dict)
+        else:  # RelGNN needs no per-hop counts (bidirectional subgraphs do not record them)
+            x_dict = self.gnn(x_dict, batch.edge_index_dict)
         return x_dict[entity_table][: seed_time.size(0)]
 
     def forward(self, batch: HeteroData, entity_table: str) -> Tensor:
