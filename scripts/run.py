@@ -32,11 +32,14 @@ def parse() -> argparse.Namespace:
     p.add_argument("--seeds", nargs="+", type=int, default=[0, 1, 2])
     p.add_argument("--results", default="results")
     # LightGBM
-    p.add_argument("--features", nargs="+", default=["table", "agg"], choices=["table", "agg"])
+    p.add_argument("--features", nargs="+", default=["table", "agg"],
+                   choices=["table", "agg", "agg_nohist"])
     p.add_argument("--n_trials", type=int, default=20, help="tuning budget per model")
     # RDL
     p.add_argument("--text", default="glove", choices=["glove", "hash", "none"])
-    p.add_argument("--epochs", type=int, default=10)
+    p.add_argument("--epochs", type=int, default=30)
+    p.add_argument("--history", action="store_true",
+                   help="give the GNN the time-safe label history of linked entities")
     p.add_argument("--lr", type=float, default=0.005)
     p.add_argument("--batch_size", type=int, default=512)
     p.add_argument("--channels", type=int, default=128)
@@ -85,11 +88,16 @@ def main() -> None:
                 print(f"[{t}] building graph (text={a.text}) ...")
                 data, stats = rdl.build_graph(b, cache_dir=f"{a.cache_dir}/{Path(a.dataset).name}",
                                               text=a.text)
-                rdl.run(b, data, stats, seeds=a.seeds, epochs=a.epochs, lr=a.lr,
+                hist = rdl.history_features(b) if a.history else None
+                name = ("rdl_sage" if a.text != "none" else "rdl_sage_notext") + \
+                    ("_hist" if a.history else "") + \
+                    (f"_L{a.num_layers}" if a.num_layers != 2 else "") + \
+                    (f"_e{a.epochs}" if a.epochs != 30 else "")
+                rdl.run(b, data, stats, seeds=a.seeds, epochs=a.epochs, lr=a.lr, hist=hist,
                         batch_size=a.batch_size, channels=a.channels, num_layers=a.num_layers,
                         num_neighbors=a.num_neighbors, max_steps_per_epoch=a.max_steps_per_epoch,
                         out_dir=runs, save_preds=preds,
-                        model_name="rdl_sage" if a.text != "none" else "rdl_sage_notext",
+                        model_name=name,
                         save_embeddings=f"{a.results}/embeddings" if a.save_embeddings else None)
         elif cmd == "tables":
             from reltrial import tables

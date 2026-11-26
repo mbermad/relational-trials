@@ -53,7 +53,7 @@ class RDLModel(torch.nn.Module):
 
     def __init__(self, data: HeteroData, col_stats_dict: Dict[str, Dict[str, Dict[StatType, Any]]],
                  num_layers: int = 2, channels: int = 128, out_channels: int = 1,
-                 aggr: str = "sum", norm: str = "batch_norm"):
+                 aggr: str = "sum", norm: str = "batch_norm", hist_dim: int = 0):
         super().__init__()
         self.encoder = HeteroEncoder(
             channels=channels,
@@ -65,6 +65,10 @@ class RDLModel(torch.nn.Module):
         self.gnn = HeteroGraphSAGE(node_types=data.node_types, edge_types=data.edge_types,
                                    channels=channels, aggr=aggr, num_layers=num_layers)
         self.head = MLP(channels, out_channels=out_channels, norm=norm, num_layers=1)
+        # Optional: time-safe label history of the trial's linked entities (see
+        # history_features), encoded and added to the trial's embedding before the head.
+        self.hist_enc = (MLP(hist_dim, hidden_channels=channels, out_channels=channels,
+                             num_layers=2, norm=None) if hist_dim else None)
         self.reset_parameters()
 
     def reset_parameters(self):
@@ -72,6 +76,8 @@ class RDLModel(torch.nn.Module):
         self.temporal_encoder.reset_parameters()
         self.gnn.reset_parameters()
         self.head.reset_parameters()
+        if self.hist_enc is not None:
+            self.hist_enc.reset_parameters()
 
     def embed(self, batch: HeteroData, entity_table: str) -> Tensor:
         """Final-layer embedding of the seed (trial) nodes; reused later for C3."""
@@ -85,7 +91,10 @@ class RDLModel(torch.nn.Module):
         return x_dict[entity_table][: seed_time.size(0)]
 
     def forward(self, batch: HeteroData, entity_table: str) -> Tensor:
-        return self.head(self.embed(batch, entity_table))
+        h = self.embed(batch, entity_table)
+        if self.hist_enc is not None:
+            h = h + self.hist_enc(batch[entity_table].hist)
+        return self.head(h)
 
 
 # --------------------------------------------------------------------------------------
@@ -127,20 +136,38 @@ def build_graph(bundle: TaskBundle, cache_dir: str, text: str = "glove",
     return data, col_stats_dict
 
 
+class AttachHistory:
+    """Loader transform: after RelBench's target transform, attach each seed row's history."""
+
+    def __init__(self, base, entity_table: str, hist: Tensor):
+        self.base, self.entity_table, self.hist = base, entity_table, hist
+
+    def __call__(self, batch: HeteroData) -> HeteroData:
+        batch = self.base(batch) if self.base is not None else batch
+        batch[self.entity_table].hist = self.hist[batch[self.entity_table].input_id]
+        return batch
+
+
 def make_loaders(bundle: TaskBundle, data: HeteroData, num_layers: int, num_neighbors: int,
                  batch_size: int, temporal_strategy: str = "uniform",
-                 num_workers: int = 0) -> Dict[str, NeighborLoader]:
+                 num_workers: int = 0,
+                 hist: Optional[Dict[str, np.ndarray]] = None) -> Dict[str, NeighborLoader]:
     loaders = {}
     for split in ("train", "val", "test", "train_eval"):
-        table = bundle.split("train" if split == "train_eval" else split)
+        base_split = "train" if split == "train_eval" else split
+        table = bundle.split(base_split)
         table_input = get_node_train_table_input(table=table, task=bundle.task)
+        transform = table_input.transform
+        if hist is not None:
+            transform = AttachHistory(transform, bundle.task.entity_table,
+                                      torch.as_tensor(hist[base_split], dtype=torch.float32))
         loaders[split] = NeighborLoader(
             data,
             num_neighbors=[int(num_neighbors / 2**i) for i in range(num_layers)],
             time_attr="time",
             input_nodes=table_input.nodes,
             input_time=table_input.time,
-            transform=table_input.transform,
+            transform=transform,
             batch_size=batch_size,
             temporal_strategy=temporal_strategy,
             shuffle=split == "train",
@@ -148,6 +175,38 @@ def make_loaders(bundle: TaskBundle, data: HeteroData, num_layers: int, num_neig
             persistent_workers=num_workers > 0,
         )
     return loaders
+
+
+def history_features(bundle: TaskBundle) -> Dict[str, np.ndarray]:
+    """Time-safe label history of each seed row's linked entities, as a dense matrix.
+
+    Reuses the tested LightGBM feature code (``features.FeatureBuilder``): for every linked
+    sponsor / condition / facility / intervention, the smoothed mean outcome of its earlier
+    trials and how many there were, counting a label only once it is known (label time +
+    the task's window <= seed time). Missing values -> the training prior (rates) or 0
+    (counts); counts are log1p-scaled; everything is standardized with train statistics.
+    """
+    from .lgbm import build_features
+
+    X, _ = build_features(bundle, "agg")
+    cols = [c for c in X["train"].columns if "_hist_" in c]
+    if not cols:
+        raise ValueError("no label-history features found for this task")
+    prior = float(bundle.train.df[bundle.task.target_col].mean())
+    out = {}
+    for split, df in X.items():
+        m = df[cols].astype(float).copy()
+        for c in cols:
+            if c.endswith("_n_sum"):
+                m[c] = np.log1p(m[c].fillna(0.0))
+            else:
+                m[c] = m[c].fillna(prior)
+        out[split] = m.to_numpy(dtype=np.float32)
+    mu, sd = out["train"].mean(0), out["train"].std(0) + 1e-6
+    out = {k: (v - mu) / sd for k, v in out.items()}
+    out["columns"] = np.array(cols)
+    print(f"  label-history features for the GNN: {len(cols)} ({', '.join(cols)})")
+    return out
 
 
 # --------------------------------------------------------------------------------------
@@ -158,13 +217,15 @@ def run(bundle: TaskBundle, data: HeteroData, col_stats_dict, seeds: List[int] =
         num_layers: int = 2, num_neighbors: int = 128, aggr: str = "sum",
         max_steps_per_epoch: int = 2000, out_dir: str = "results/runs",
         save_preds: Optional[str] = "results/preds", model_name: str = "rdl_sage",
-        save_embeddings: Optional[str] = None) -> List[RunRecord]:
+        save_embeddings: Optional[str] = None,
+        hist: Optional[Dict[str, np.ndarray]] = None) -> List[RunRecord]:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     task = bundle.task
     task_type = task.task_type.value
     metric, higher = PRIMARY[task_type]
     entity_table = task.entity_table
-    loaders = make_loaders(bundle, data, num_layers, num_neighbors, batch_size)
+    loaders = make_loaders(bundle, data, num_layers, num_neighbors, batch_size, hist=hist)
+    hist_dim = 0 if hist is None else int(hist["train"].shape[1])
     y = {s: bundle.split(s).df[task.target_col].to_numpy(dtype=float) for s in ("val", "test")}
 
     if bundle.is_classification:
@@ -193,7 +254,7 @@ def run(bundle: TaskBundle, data: HeteroData, col_stats_dict, seeds: List[int] =
         if device.type == "cuda":
             torch.cuda.reset_peak_memory_stats()
         model = RDLModel(data, col_stats_dict, num_layers=num_layers, channels=channels,
-                         aggr=aggr).to(device)
+                         aggr=aggr, hist_dim=hist_dim).to(device)
         opt = torch.optim.Adam(model.parameters(), lr=lr)
         best_state, best_score, history = None, (-math.inf if higher else math.inf), []
         t0 = time.perf_counter()
@@ -235,7 +296,7 @@ def run(bundle: TaskBundle, data: HeteroData, col_stats_dict, seeds: List[int] =
             params={"epochs": epochs, "lr": lr, "batch_size": batch_size, "channels": channels,
                     "num_layers": num_layers, "num_neighbors": num_neighbors, "aggr": aggr,
                     "max_steps_per_epoch": max_steps_per_epoch, "device": device.type,
-                    "history": history},
+                    "label_history_features": hist_dim, "history": history},
         )
         rec.save(out_dir)
         if save_preds:

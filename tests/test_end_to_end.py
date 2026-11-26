@@ -60,3 +60,42 @@ def test_rdl_smoke(bundles, tmp_path, monkeypatch):
                    batch_size=128, out_dir="runs", save_preds=None, save_embeddings="emb")
     assert 0.0 <= recs[0].test["roc_auc"] <= 1.0
     assert (tmp_path / "emb" / "study-outcome" / "rdl_sage" / "test.npy").exists()
+
+
+def test_nohist_ablation_drops_only_label_history(bundles):
+    b = bundles["study-outcome"]
+    X_agg, _ = lgbm.build_features(b, "agg")
+    X_nohist, _ = lgbm.build_features(b, "agg_nohist")
+    hist_cols = {c for c in X_agg["train"].columns if "_hist_" in c}
+    assert hist_cols, "the full aggregate set should contain label-history features"
+    assert not any("_hist_" in c for c in X_nohist["train"].columns)
+    assert set(X_agg["train"].columns) - set(X_nohist["train"].columns) == hist_cols
+
+
+def test_label_history_explains_the_synthetic_signal(bundles, tmp_path, monkeypatch):
+    # In the synthetic data, outcomes are driven by the sponsor's latent quality, which only
+    # the history of its earlier trials reveals: removing history should hurt.
+    monkeypatch.chdir(tmp_path)
+    b = bundles["study-outcome"]
+    full = lgbm.run(b, "agg", seeds=[0], n_trials=2, out_dir="runs", save_preds=None)[0]
+    nohist = lgbm.run(b, "agg_nohist", seeds=[0], n_trials=2, out_dir="runs", save_preds=None)[0]
+    assert full.test["roc_auc"] > nohist.test["roc_auc"] + 0.03
+
+
+@pytest.mark.skipif(any(importlib.util.find_spec(m) is None
+                        for m in ("torch_geometric", "torch_frame", "pyg_lib")),
+                    reason="GNN dependencies (torch_geometric, torch_frame, pyg-lib) not installed")
+def test_rdl_with_label_history_smoke(bundles, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    from reltrial import rdl
+
+    b = bundles["study-outcome"]
+    hist = rdl.history_features(b)
+    assert hist["train"].shape[0] == len(b.train.df)
+    assert hist["test"].shape[0] == len(b.test.df)
+    graph, stats = rdl.build_graph(b, cache_dir=str(tmp_path / "cache"), text="hash")
+    recs = rdl.run(b, graph, stats, seeds=[0], epochs=2, channels=32, num_neighbors=16,
+                   batch_size=128, out_dir="runs", save_preds=None, hist=hist,
+                   model_name="rdl_sage_hist")
+    assert recs[0].params["label_history_features"] == hist["train"].shape[1]
+    assert 0.0 <= recs[0].test["roc_auc"] <= 1.0

@@ -37,13 +37,16 @@ def sample_params(rng: np.random.Generator) -> Dict:
 
 
 def build_features(bundle: TaskBundle, feature_set: str):
+    """Feature sets: 'table' (trial row only), 'agg' (+ relational aggregates and label
+    history), 'agg_nohist' ('agg' without any label-history feature: the ablation)."""
     task = bundle.task
     history = None
     if feature_set == "agg":
         # Train + val labels, used only once known (label time + timedelta <= seed time).
         history = pd.concat([bundle.train.df, bundle.val.df], ignore_index=True)
     fb = FeatureBuilder(bundle.db, task.entity_table, task.entity_col, task.time_col,
-                        task.target_col, task.timedelta, feature_set=feature_set,
+                        task.target_col, task.timedelta,
+                        feature_set="table" if feature_set == "table" else "agg",
                         label_history=history)
     fb.fit(bundle.train.df)
     X = {s: _clean_names(fb.transform(bundle.split(s).df)) for s in ("train", "val", "test")}

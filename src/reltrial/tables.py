@@ -13,9 +13,13 @@ from .evaluate import REFERENCE, load_runs, mean_ci
 
 MODEL_LABELS = {
     "lgbm_table": "LightGBM (trial table)",
+    "lgbm_agg_nohist": "LightGBM + aggregates, no label history",
     "lgbm_agg": "LightGBM + aggregates",
-    "rdl_sage": "RDL (GraphSAGE)",
-    "rdl_sage_notext": "RDL (GraphSAGE, no text)",
+    "rdl_sage_notext_e10": "GNN, no text (10 epochs)",
+    "rdl_sage_notext": "GNN, no text",
+    "rdl_sage_notext_hist": "GNN, no text + label history",
+    "rdl_sage": "GNN (GloVe text)",
+    "rdl_sage_hist": "GNN (GloVe text) + label history",
     "relgnn": "RelGNN",
     "relgt": "RelGT",
 }
