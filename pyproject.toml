@@ -37,6 +37,7 @@ testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 110
+extend-exclude = ["src/reltrial/relgnn"]  # vendored, kept byte-identical to upstream
 
 [tool.ruff.lint]
 select = ["E", "F", "W"]

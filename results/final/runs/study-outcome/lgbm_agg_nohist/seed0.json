@@ -1,0 +1,30 @@
+{
+  "task": "study-outcome",
+  "model": "lgbm_agg_nohist",
+  "seed": 0,
+  "task_type": "binary_classification",
+  "val": {
+    "roc_auc": 0.7044773252203593
+  },
+  "test": {
+    "roc_auc": 0.7203939801193806
+  },
+  "train_seconds": 0.6472370569999839,
+  "infer_seconds_per_1k": 0.011997961212135566,
+  "peak_gpu_mem_mb": null,
+  "params": {
+    "num_leaves": 171,
+    "learning_rate": 0.04042367334155789,
+    "min_child_samples": 92,
+    "feature_fraction": 0.8647482804919993,
+    "bagging_fraction": 0.7718124957327115,
+    "lambda_l2": 5.499075661406087,
+    "best_iteration": 40,
+    "n_features": 85,
+    "n_trials": 20,
+    "feature_seconds": 7.589402626000009
+  },
+  "notes": "",
+  "timestamp": "2026-11-26 06:09:48",
+  "host": "693848e124f0"
+}

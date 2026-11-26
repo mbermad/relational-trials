@@ -1,0 +1,12 @@
+{
+  "models": [
+    "lgbm_table",
+    "lgbm_agg_nohist",
+    "lgbm_agg",
+    "rdl_sage_notext",
+    "rdl_sage_notext_hist",
+    "rdl_sage",
+    "rdl_sage_hist"
+  ],
+  "n_runs": 42
+}

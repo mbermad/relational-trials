@@ -1,0 +1,32 @@
+{
+  "task": "study-adverse",
+  "model": "lgbm_table",
+  "seed": 1,
+  "task_type": "regression",
+  "val": {
+    "mae": 37.91868476806926,
+    "nmae": 0.11181806848822103
+  },
+  "test": {
+    "mae": 35.789087467106256,
+    "nmae": 0.1055381181600932
+  },
+  "train_seconds": 62.514419918000385,
+  "infer_seconds_per_1k": 0.3782811830213534,
+  "peak_gpu_mem_mb": null,
+  "params": {
+    "num_leaves": 105,
+    "learning_rate": 0.030608028624359088,
+    "min_child_samples": 34,
+    "feature_fraction": 0.9447439171745001,
+    "bagging_fraction": 0.9670217579781248,
+    "lambda_l2": 0.026988626732963816,
+    "best_iteration": 1999,
+    "n_features": 51,
+    "n_trials": 20,
+    "feature_seconds": 14.872917984999958
+  },
+  "notes": "",
+  "timestamp": "2026-11-07 15:50:55",
+  "host": "a3e4f485c5d0"
+}

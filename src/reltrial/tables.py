@@ -20,10 +20,39 @@ MODEL_LABELS = {
     "rdl_sage_notext_hist": "GNN, no text + label history",
     "rdl_sage": "GNN (GloVe text)",
     "rdl_sage_hist": "GNN (GloVe text) + label history",
-    "relgnn": "RelGNN",
+    "rdl_sage_tuned": "GNN (GloVe text), tuned",
+    "rdl_sage_hist_tuned": "GNN (GloVe text) + label history, tuned",
+    "relgnn": "RelGNN (GloVe text)",
+    "relgnn_hist": "RelGNN (GloVe text) + label history",
+    "relgnn_notext": "RelGNN, no text",
+    "relgnn_notext_hist": "RelGNN, no text + label history",
     "relgt": "RelGT",
 }
 MODEL_ORDER = list(MODEL_LABELS)
+
+
+def label(model: str) -> str:
+    """Readable name for any run name, including combinations not listed above."""
+    if model in MODEL_LABELS:
+        return MODEL_LABELS[model]
+    parts = model.split("_")
+    base = {"rdl": "GNN", "relgnn": "RelGNN", "lgbm": "LightGBM"}.get(parts[0], parts[0])
+    extra = []
+    if "notext" in parts:
+        extra.append("no text")
+    elif base in ("GNN", "RelGNN"):
+        extra.append("GloVe text")
+    name = f"{base} ({', '.join(extra)})" if extra else base
+    if "hist" in parts:
+        name += " + label history"
+    if "tuned" in parts:
+        name += ", tuned"
+    for p in parts:
+        if p.startswith("e") and p[1:].isdigit():
+            name += f" ({p[1:]} epochs)"
+        if p.startswith("L") and p[1:].isdigit():
+            name += f" ({p[1:]} layers)"
+    return name
 COLUMNS = [  # (task, split, metric, header, higher_is_better)
     ("study-outcome", "val", "roc_auc", "Outcome AUROC (val)", True),
     ("study-outcome", "test", "roc_auc", "Outcome AUROC (test)", True),
@@ -94,7 +123,7 @@ def build(runs_dir: str = "results/runs", out_dir: str = "results/tables") -> Di
             seeds = max(seeds, n)
             txt = _fmt(mean, half) if mean is not None else "--"
             cells.append(f"**{txt}**" if best.get((task, split, metric)) == m else txt)
-        md.append(f"| {MODEL_LABELS.get(m, m)} | " + " | ".join(cells) + f" | {seeds} |")
+        md.append(f"| {label(m)} | " + " | ".join(cells) + f" | {seeds} |")
     ref = []
     for m in ("lgbm_table", "rdl_sage"):
         o = REFERENCE.get(("study-outcome", m))
@@ -119,7 +148,7 @@ def build(runs_dir: str = "results/runs", out_dir: str = "results/tables") -> Di
             body = f"{mean:.{digits}f}" + ("" if half is None or math.isnan(half)
                                           else f"\\,{{\\scriptsize$\\pm${half:.{digits}f}}}")
             cells.append(f"\\textbf{{{body}}}" if best.get((task, split, metric)) == m else body)
-        tex.append(MODEL_LABELS.get(m, m).replace("&", "\\&") + " & " + " & ".join(cells) + r" \\")
+        tex.append(label(m).replace("&", "\\&") + " & " + " & ".join(cells) + r" \\")
     tex.append(r"\midrule")
     for m in ("lgbm_table", "rdl_sage"):
         o = REFERENCE[("study-outcome", m)]
@@ -134,7 +163,7 @@ def build(runs_dir: str = "results/runs", out_dir: str = "results/tables") -> Di
         for task in ("study-outcome", "study-adverse"):
             mean, _, _ = _cell(agg, m, task, "-", "train_seconds")
             cells.append("--" if mean is None or math.isnan(mean) else f"{mean:.0f}")
-        rt.append(MODEL_LABELS.get(m, m) + " & " + " & ".join(cells) + r" \\")
+        rt.append(label(m) + " & " + " & ".join(cells) + r" \\")
     (out / "runtime_rows.tex").write_text("\n".join(rt) + "\n")
 
     summary = {"models": models, "n_runs": len(runs)}

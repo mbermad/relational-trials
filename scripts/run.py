@@ -46,6 +46,13 @@ def parse() -> argparse.Namespace:
     p.add_argument("--num_layers", type=int, default=2)
     p.add_argument("--num_neighbors", type=int, default=128)
     p.add_argument("--max_steps_per_epoch", type=int, default=2000)
+    p.add_argument("--arch", default="sage", choices=["sage", "relgnn"],
+                   help="sage: RelBench's hetero GraphSAGE; relgnn: RelGNN with its official config")
+    p.add_argument("--dropout", type=float, default=0.0)
+    p.add_argument("--weight_decay", type=float, default=0.0)
+    p.add_argument("--patience", type=int, default=None, help="early stopping (epochs)")
+    p.add_argument("--tune", type=int, default=0,
+                   help="random-search trials on validation before training (0 = off)")
     p.add_argument("--cache_dir", default=os.path.expanduser("~/.cache/reltrial"))
     p.add_argument("--save_embeddings", action="store_true",
                    help="export trial embeddings for C3 (first seed only)")
@@ -89,16 +96,30 @@ def main() -> None:
                 data, stats = rdl.build_graph(b, cache_dir=f"{a.cache_dir}/{Path(a.dataset).name}",
                                               text=a.text)
                 hist = rdl.history_features(b) if a.history else None
-                name = ("rdl_sage" if a.text != "none" else "rdl_sage_notext") + \
-                    ("_hist" if a.history else "") + \
-                    (f"_L{a.num_layers}" if a.num_layers != 2 else "") + \
+                prefix = "relgnn" if a.arch == "relgnn" else "rdl_sage"
+                name = prefix + ("_notext" if a.text == "none" else "") + \
+                    ("_hist" if a.history else "") + ("_tuned" if a.tune else "") + \
+                    (f"_L{a.num_layers}" if a.num_layers != 2 and a.arch == "sage" else "") + \
                     (f"_e{a.epochs}" if a.epochs != 30 else "")
-                rdl.run(b, data, stats, seeds=a.seeds, epochs=a.epochs, lr=a.lr, hist=hist,
-                        batch_size=a.batch_size, channels=a.channels, num_layers=a.num_layers,
-                        num_neighbors=a.num_neighbors, max_steps_per_epoch=a.max_steps_per_epoch,
-                        out_dir=runs, save_preds=preds,
+                # Settings: our defaults; RelGNN's official per-task config for --arch relgnn.
+                kw = dict(epochs=a.epochs, lr=a.lr, batch_size=a.batch_size, channels=a.channels,
+                          num_layers=a.num_layers, num_neighbors=a.num_neighbors,
+                          max_steps_per_epoch=a.max_steps_per_epoch, arch=a.arch,
+                          dropout=a.dropout, weight_decay=a.weight_decay, patience=a.patience)
+                if a.arch == "relgnn":
+                    kw.update(rdl.relgnn_config(a.dataset, t))
+                if a.tune:
+                    print(f"[{t}] tuning {name} ({a.tune} trials on validation, seed 0) ...")
+                    fixed = {k: v for k, v in kw.items() if k not in rdl.TUNE_SPACE}
+                    fixed["patience"] = a.patience or 6
+                    base = {k: kw[k] for k in rdl.TUNE_SPACE}
+                    kw.update(rdl.tune(b, data, stats, n_trials=a.tune, base=base, hist=hist, **fixed))
+                    kw["patience"] = fixed["patience"]
+                print(f"[{t}] training {name} with {kw}")
+                rdl.run(b, data, stats, seeds=a.seeds, hist=hist, out_dir=runs, save_preds=preds,
                         model_name=name,
-                        save_embeddings=f"{a.results}/embeddings" if a.save_embeddings else None)
+                        save_embeddings=f"{a.results}/embeddings" if a.save_embeddings else None,
+                        **kw)
         elif cmd == "tables":
             from reltrial import tables
 

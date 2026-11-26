@@ -99,3 +99,41 @@ def test_rdl_with_label_history_smoke(bundles, tmp_path, monkeypatch):
                    model_name="rdl_sage_hist")
     assert recs[0].params["label_history_features"] == hist["train"].shape[1]
     assert 0.0 <= recs[0].test["roc_auc"] <= 1.0
+
+
+def test_relgnn_atomic_routes_skip_junction_tables():
+    from reltrial.relgnn.atomic_routes import get_atomic_routes
+
+    # Edge types as RelBench builds them for studies <- sponsors_studies -> sponsors.
+    edges = [("sponsors_studies", "f2p_nct_id", "studies"),
+             ("studies", "rev_f2p_nct_id", "sponsors_studies"),
+             ("sponsors_studies", "f2p_sponsor_id", "sponsors"),
+             ("sponsors", "rev_f2p_sponsor_id", "sponsors_studies"),
+             ("designs", "f2p_nct_id", "studies"),
+             ("studies", "rev_f2p_nct_id", "designs")]
+    routes = get_atomic_routes(edges)
+    # A composite route lets a sponsor's message reach the trial in one layer.
+    assert ("dim-fact-dim", "sponsors_studies", "f2p_nct_id", "studies",
+            "sponsors", "rev_f2p_sponsor_id", "sponsors_studies") in routes
+    # A table with a single foreign key keeps an ordinary (dim-dim) edge.
+    assert ("dim-dim", "designs", "f2p_nct_id", "studies") in routes
+
+
+@pytest.mark.skipif(any(importlib.util.find_spec(m) is None
+                        for m in ("torch_geometric", "torch_frame", "pyg_lib")),
+                    reason="GNN dependencies (torch_geometric, torch_frame, pyg-lib) not installed")
+def test_relgnn_and_tuning_smoke(bundles, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    from reltrial import rdl
+
+    b = bundles["study-outcome"]
+    graph, stats = rdl.build_graph(b, cache_dir=str(tmp_path / "cache"), text="hash")
+    cfg = rdl.relgnn_config("rel-trial", "study-outcome")
+    cfg.update(channels=32, num_neighbors=16, batch_size=128)
+    recs = rdl.run(b, graph, stats, seeds=[0], epochs=2, out_dir="runs", save_preds=None,
+                   arch="relgnn", model_name="relgnn", dropout=0.2, weight_decay=1e-4, **cfg)
+    assert 0.0 <= recs[0].test["roc_auc"] <= 1.0
+    best = rdl.tune(b, graph, stats, n_trials=2, epochs=2, batch_size=128, patience=1,
+                    base={"lr": 0.005, "channels": 32, "dropout": 0.0, "weight_decay": 0.0,
+                          "num_neighbors": 16})
+    assert set(best) == set(rdl.TUNE_SPACE)

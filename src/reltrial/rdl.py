@@ -27,6 +27,7 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 import torch
 from torch import Tensor
+import torch.nn.functional as F
 from torch.nn import BCEWithLogitsLoss, L1Loss
 from torch_frame import stype
 from torch_frame.config.text_embedder import TextEmbedderConfig
@@ -53,8 +54,11 @@ class RDLModel(torch.nn.Module):
 
     def __init__(self, data: HeteroData, col_stats_dict: Dict[str, Dict[str, Dict[StatType, Any]]],
                  num_layers: int = 2, channels: int = 128, out_channels: int = 1,
-                 aggr: str = "sum", norm: str = "batch_norm", hist_dim: int = 0):
+                 aggr: str = "sum", norm: str = "batch_norm", hist_dim: int = 0,
+                 arch: str = "sage", num_heads: int = 1, simplified_mp: bool = False,
+                 dropout: float = 0.0):
         super().__init__()
+        self.dropout = dropout
         self.encoder = HeteroEncoder(
             channels=channels,
             node_to_col_names_dict={nt: data[nt].tf.col_names_dict for nt in data.node_types},
@@ -62,8 +66,19 @@ class RDLModel(torch.nn.Module):
         )
         self.temporal_encoder = HeteroTemporalEncoder(
             node_types=[nt for nt in data.node_types if "time" in data[nt]], channels=channels)
-        self.gnn = HeteroGraphSAGE(node_types=data.node_types, edge_types=data.edge_types,
-                                   channels=channels, aggr=aggr, num_layers=num_layers)
+        if arch == "sage":
+            self.gnn = HeteroGraphSAGE(node_types=data.node_types, edge_types=data.edge_types,
+                                       channels=channels, aggr=aggr, num_layers=num_layers)
+        elif arch == "relgnn":
+            from .relgnn.atomic_routes import get_atomic_routes
+            from .relgnn.nn import RelGNN
+
+            self.gnn = RelGNN(node_types=data.node_types,
+                              edge_types=get_atomic_routes(data.edge_types), channels=channels,
+                              aggr=aggr, num_model_layers=num_layers, num_heads=num_heads,
+                              simplified_MP=simplified_mp)
+        else:
+            raise ValueError(f"unknown architecture {arch!r}")
         self.head = MLP(channels, out_channels=out_channels, norm=norm, num_layers=1)
         # Optional: time-safe label history of the trial's linked entities (see
         # history_features), encoded and added to the trial's embedding before the head.
@@ -86,6 +101,8 @@ class RDLModel(torch.nn.Module):
         rel_time = self.temporal_encoder(seed_time, batch.time_dict, batch.batch_dict)
         for nt, rt in rel_time.items():
             x_dict[nt] = x_dict[nt] + rt
+        if self.dropout:
+            x_dict = {k: F.dropout(v, self.dropout, self.training) for k, v in x_dict.items()}
         x_dict = self.gnn(x_dict, batch.edge_index_dict, batch.num_sampled_nodes_dict,
                           batch.num_sampled_edges_dict)
         return x_dict[entity_table][: seed_time.size(0)]
@@ -94,6 +111,8 @@ class RDLModel(torch.nn.Module):
         h = self.embed(batch, entity_table)
         if self.hist_enc is not None:
             h = h + self.hist_enc(batch[entity_table].hist)
+        if self.dropout:
+            h = F.dropout(h, self.dropout, self.training)
         return self.head(h)
 
 
@@ -151,7 +170,8 @@ class AttachHistory:
 def make_loaders(bundle: TaskBundle, data: HeteroData, num_layers: int, num_neighbors: int,
                  batch_size: int, temporal_strategy: str = "uniform",
                  num_workers: int = 0,
-                 hist: Optional[Dict[str, np.ndarray]] = None) -> Dict[str, NeighborLoader]:
+                 hist: Optional[Dict[str, np.ndarray]] = None,
+                 subgraph_type: str = "directional") -> Dict[str, NeighborLoader]:
     loaders = {}
     for split in ("train", "val", "test", "train_eval"):
         base_split = "train" if split == "train_eval" else split
@@ -170,11 +190,70 @@ def make_loaders(bundle: TaskBundle, data: HeteroData, num_layers: int, num_neig
             transform=transform,
             batch_size=batch_size,
             temporal_strategy=temporal_strategy,
+            subgraph_type=subgraph_type,
             shuffle=split == "train",
             num_workers=num_workers,
             persistent_workers=num_workers > 0,
         )
     return loaders
+
+
+# Per-task settings from RelGNN's official code (examples/utils.py, get_configs).
+RELGNN_CONFIGS = {
+    ("rel-trial", "study-outcome"): dict(model_layers=2, channels=256, aggr="sum", num_heads=1,
+                                         batch_size=512, num_neighbors=128, num_layers=2,
+                                         subgraph_type="bidirectional"),
+    ("rel-trial", "study-adverse"): dict(model_layers=1, channels=128, aggr="mean", num_heads=2,
+                                         batch_size=128, num_neighbors=64, num_layers=2,
+                                         subgraph_type="directional"),
+    ("rel-f1", "driver-dnf"): dict(model_layers=2, channels=128, aggr="sum", num_heads=1,
+                                   batch_size=256, num_neighbors=128, num_layers=2,
+                                   subgraph_type="directional"),
+    ("rel-f1", "driver-top3"): dict(model_layers=1, channels=128, aggr="sum", num_heads=2,
+                                    simplified_mp=True, batch_size=256, num_neighbors=128,
+                                    num_layers=2, subgraph_type="directional"),
+    ("rel-f1", "driver-position"): dict(model_layers=1, channels=128, aggr="sum", num_heads=4,
+                                        batch_size=512, num_neighbors=128, num_layers=2,
+                                        subgraph_type="bidirectional"),
+}
+
+
+def relgnn_config(dataset_name: str, task_name: str) -> Dict[str, Any]:
+    key = (Path(dataset_name).name.replace("-synthetic", ""), task_name)
+    return dict(RELGNN_CONFIGS.get(key, dict(model_layers=2, channels=128, aggr="sum",
+                                             num_heads=1, subgraph_type="bidirectional")))
+
+
+TUNE_SPACE = {
+    "lr": [0.001, 0.002, 0.005, 0.01],
+    "channels": [64, 128, 256],
+    "dropout": [0.0, 0.1, 0.2, 0.3, 0.5],
+    "weight_decay": [0.0, 1e-5, 1e-4, 1e-3],
+    "num_neighbors": [32, 64, 128],
+}
+
+
+def tune(bundle: TaskBundle, data: HeteroData, col_stats_dict, n_trials: int = 12,
+         seed: int = 0, base: Optional[Dict[str, Any]] = None, **fixed) -> Dict[str, Any]:
+    """Random search on validation with seed 0 and early stopping; returns the best params.
+
+    Same protocol as LightGBM (fixed budget, scored on validation); trials are not logged
+    as runs. ``base`` is always tried first, so tuning can only match or beat it.
+    """
+    metric, higher = PRIMARY[bundle.task.task_type.value]
+    rng = np.random.default_rng(seed)
+    trials = [dict(base or {})]
+    while len(trials) < n_trials:
+        trials.append({k: v[int(rng.integers(len(v)))] for k, v in TUNE_SPACE.items()})
+    best, best_score = None, None
+    for i, params in enumerate(trials):
+        kw = {**fixed, **params}
+        rec = run(bundle, data, col_stats_dict, seeds=[seed], save=False, save_preds=None, **kw)[0]
+        score = rec.params["best_val"]
+        if best is None or (score > best_score if higher else score < best_score):
+            best, best_score = params, score
+        print(f"  tune {i + 1:02d}/{n_trials} {params} -> val {metric} {score:.4f} (best {best_score:.4f})")
+    return best
 
 
 def history_features(bundle: TaskBundle) -> Dict[str, np.ndarray]:
@@ -218,13 +297,20 @@ def run(bundle: TaskBundle, data: HeteroData, col_stats_dict, seeds: List[int] =
         max_steps_per_epoch: int = 2000, out_dir: str = "results/runs",
         save_preds: Optional[str] = "results/preds", model_name: str = "rdl_sage",
         save_embeddings: Optional[str] = None,
-        hist: Optional[Dict[str, np.ndarray]] = None) -> List[RunRecord]:
+        hist: Optional[Dict[str, np.ndarray]] = None, arch: str = "sage",
+        model_layers: Optional[int] = None, num_heads: int = 1, simplified_mp: bool = False,
+        subgraph_type: str = "directional", dropout: float = 0.0, weight_decay: float = 0.0,
+        patience: Optional[int] = None, save: bool = True) -> List[RunRecord]:
+    """Train ``len(seeds)`` models and log each. ``num_layers`` is the number of sampled hops;
+    ``model_layers`` (default: the same) is the number of message-passing layers."""
+    model_layers = model_layers or num_layers
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     task = bundle.task
     task_type = task.task_type.value
     metric, higher = PRIMARY[task_type]
     entity_table = task.entity_table
-    loaders = make_loaders(bundle, data, num_layers, num_neighbors, batch_size, hist=hist)
+    loaders = make_loaders(bundle, data, num_layers, num_neighbors, batch_size, hist=hist,
+                           subgraph_type=subgraph_type)
     hist_dim = 0 if hist is None else int(hist["train"].shape[1])
     y = {s: bundle.split(s).df[task.target_col].to_numpy(dtype=float) for s in ("val", "test")}
 
@@ -253,9 +339,11 @@ def run(bundle: TaskBundle, data: HeteroData, col_stats_dict, seeds: List[int] =
         seed_everything(seed)
         if device.type == "cuda":
             torch.cuda.reset_peak_memory_stats()
-        model = RDLModel(data, col_stats_dict, num_layers=num_layers, channels=channels,
-                         aggr=aggr, hist_dim=hist_dim).to(device)
-        opt = torch.optim.Adam(model.parameters(), lr=lr)
+        model = RDLModel(data, col_stats_dict, num_layers=model_layers, channels=channels,
+                         aggr=aggr, hist_dim=hist_dim, arch=arch, num_heads=num_heads,
+                         simplified_mp=simplified_mp, dropout=dropout).to(device)
+        opt = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+        since_best = 0
         best_state, best_score, history = None, (-math.inf if higher else math.inf), []
         t0 = time.perf_counter()
         for epoch in range(1, epochs + 1):
@@ -279,6 +367,12 @@ def run(bundle: TaskBundle, data: HeteroData, col_stats_dict, seeds: List[int] =
             print(f"  seed {seed} epoch {epoch:02d}: loss {loss_sum / max(n_sum, 1):.4f}  val {metric} {score:.4f}")
             if (score >= best_score) if higher else (score <= best_score):
                 best_score, best_state = score, copy.deepcopy(model.state_dict())
+                since_best = 0
+            else:
+                since_best += 1
+                if patience is not None and since_best >= patience:
+                    print(f"  early stop at epoch {epoch} (no val improvement for {patience})")
+                    break
         train_seconds = time.perf_counter() - t0
 
         model.load_state_dict(best_state)
@@ -295,16 +389,21 @@ def run(bundle: TaskBundle, data: HeteroData, col_stats_dict, seeds: List[int] =
             train_seconds=train_seconds, infer_seconds_per_1k=infer, peak_gpu_mem_mb=peak,
             params={"epochs": epochs, "lr": lr, "batch_size": batch_size, "channels": channels,
                     "num_layers": num_layers, "num_neighbors": num_neighbors, "aggr": aggr,
+                    "arch": arch, "model_layers": model_layers, "num_heads": num_heads,
+                    "simplified_mp": simplified_mp, "subgraph_type": subgraph_type,
+                    "dropout": dropout, "weight_decay": weight_decay, "patience": patience,
+                    "best_val": best_score,
                     "max_steps_per_epoch": max_steps_per_epoch, "device": device.type,
                     "label_history_features": hist_dim, "history": history},
         )
-        rec.save(out_dir)
-        if save_preds:
+        if save:
+            rec.save(out_dir)
+        if save and save_preds:
             d = Path(save_preds) / bundle.task_name / model_name
             d.mkdir(parents=True, exist_ok=True)
             for s, p in preds.items():
                 np.save(d / f"seed{seed}_{s}.npy", p)
-        if save_embeddings and seed == seeds[0]:
+        if save and save_embeddings and seed == seeds[0]:
             export_embeddings(model, loaders, entity_table, device,
                               Path(save_embeddings) / bundle.task_name / model_name)
         print(f"  seed {seed}: val {rec.val}  test {rec.test}  ({train_seconds:.0f}s)")
