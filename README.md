@@ -44,7 +44,7 @@ run all cells.
 git clone https://github.com/mbermad/relational-trials.git && cd relational-trials
 pip install -e ".[dev]"                     # data, LightGBM, evaluation, tests
 pip install -e ".[gnn]"                     # + PyTorch Geometric, PyTorch Frame
-pip install pyg-lib -f https://data.pyg.org/whl/torch-${TORCH}+${CUDA}.html  # e.g. torch-2.8.0+cu126
+pip install pyg-lib -f https://data.pyg.org/whl/torch-${TORCH}+${CUDA}.html  # TORCH = your torch minor version + .0 (e.g. 2.14.0), CUDA e.g. cu130
 
 python scripts/run.py explore               # schema, label stats, figures
 python scripts/run.py lgbm                  # both LightGBM variants, both tasks, 3 seeds

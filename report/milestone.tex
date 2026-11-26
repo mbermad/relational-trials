@@ -28,18 +28,15 @@
 
 % Dataset statistics: defaults, overwritten by explore/stats.tex from the notebook.
 \def\NumTables{15}\def\NumRows{5.4M}\def\NumCols{140}
-\def\RowsOutcomeTrain{--}\def\RowsOutcomeVal{--}\def\RowsOutcomeTest{--}
-\def\PosOutcomeTrain{--}\def\PosOutcomeVal{--}\def\PosOutcomeTest{--}
-\def\RowsAdverseTrain{--}\def\RowsAdverseVal{--}\def\RowsAdverseTest{--}
-\def\MedianAdverseTrain{--}\def\MedianAdverseVal{--}\def\MedianAdverseTest{--}
-\def\PtfAdverseTrain{--}\def\PtfAdverseVal{--}\def\PtfAdverseTest{--}
+\def\RowsOutcomeTrain{\todo{n}}\def\RowsOutcomeVal{\todo{n}}\def\RowsOutcomeTest{\todo{n}}
+\def\PosOutcomeTrain{\todo{\%}}\def\PosOutcomeVal{\todo{\%}}\def\PosOutcomeTest{\todo{\%}}
+\def\RowsAdverseTrain{\todo{n}}\def\RowsAdverseVal{\todo{n}}\def\RowsAdverseTest{\todo{n}}
+\def\MedianAdverseTrain{\todo{m}}\def\MedianAdverseVal{\todo{m}}\def\MedianAdverseTest{\todo{m}}
+\def\PtfAdverseTrain{\todo{p}}\def\PtfAdverseVal{\todo{p}}\def\PtfAdverseTest{\todo{p}}
 \IfFileExists{explore/stats.tex}{\input{explore/stats.tex}}{}
 
-\IfFileExists{tables/main_rows.tex}{\def\ResultRows{\csname @@input\endcsname tables/main_rows.tex }}% primitive input: works inside tabular
-  {\def\ResultRows{\multicolumn{6}{c}{\todo{run the notebook and upload \texttt{tables/main\_rows.tex}}} \\}}
-
 \newcommand{\fig}[2]{\IfFileExists{#1}{\includegraphics[width=#2]{#1}}%
-  {\fbox{\parbox[c][1.1in][c]{#2}{\centering\small\todo{run the notebook}\\\texttt{\detokenize{#1}}}}}}
+  {\fbox{\parbox[c][1.1in][c]{#2}{\centering\small\todo{run the notebook: #1}}}}}
 
 \title{When Does Relational Structure Pay Off?\\
 Accuracy--Cost Tradeoffs of Relational Graph Models\\for Clinical Trial Outcome Prediction\\
@@ -133,8 +130,8 @@ report NMAE and raw MAE. Table~\ref{tab:splits} gives split sizes.
 
 \begin{figure}[t]
 \centering
-\fig{explore/trials_per_year.png}{0.48\linewidth}\hfill
-\fig{explore/adverse_distribution.png}{0.48\linewidth}
+\fig{explore/trials_per_year.png}{0.49\linewidth}\hfill
+\fig{explore/adverse_distribution.png}{0.49\linewidth}
 \caption{Left: trials by start year, with the validation and test boundaries. Right: the
 adverse-event target on a log scale.}
 \label{fig:data}
@@ -201,7 +198,8 @@ better. Bold marks the best in each column. Bottom rows: RelBench's published si
 \cmidrule(lr){2-3}\cmidrule(lr){4-6}
 Model & Val & Test & NMAE val & NMAE test & MAE test \\
 \midrule
-\ResultRows
+\IfFileExists{tables/main_rows.tex}{\input{tables/main_rows.tex}}{%
+\multicolumn{6}{c}{\todo{run the notebook and upload \texttt{tables/main\_rows.tex}}} \\}
 \bottomrule
 \end{tabular}
 \vspace{-0.5em}

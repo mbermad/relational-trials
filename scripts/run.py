@@ -89,6 +89,7 @@ def main() -> None:
                         batch_size=a.batch_size, channels=a.channels, num_layers=a.num_layers,
                         num_neighbors=a.num_neighbors, max_steps_per_epoch=a.max_steps_per_epoch,
                         out_dir=runs, save_preds=preds,
+                        model_name="rdl_sage" if a.text != "none" else "rdl_sage_notext",
                         save_embeddings=f"{a.results}/embeddings" if a.save_embeddings else None)
         elif cmd == "tables":
             from reltrial import tables

@@ -15,6 +15,7 @@ MODEL_LABELS = {
     "lgbm_table": "LightGBM (trial table)",
     "lgbm_agg": "LightGBM + aggregates",
     "rdl_sage": "RDL (GraphSAGE)",
+    "rdl_sage_notext": "RDL (GraphSAGE, no text)",
     "relgnn": "RelGNN",
     "relgt": "RelGT",
 }
