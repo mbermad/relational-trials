@@ -149,13 +149,27 @@ def build_graph(bundle: TaskBundle, cache_dir: str, text: str = "glove",
         text_cfg = TextEmbedderConfig(text_embedder=make_text_embedder(text, device=device),
                                       batch_size=256)
 
-    data, col_stats_dict = make_pkey_fkey_graph(
-        db,
-        col_to_stype_dict=col_to_stype_dict,
-        text_embedder_cfg=text_cfg,
-        cache_dir=str(Path(cache_dir) / f"materialized_{bundle.task_name}_{text}"),
-        remove_columns=bundle.task.hidden_columns(),
-    )
+    materialized = Path(cache_dir) / f"materialized_{bundle.task_name}_{text}"
+
+    def build():
+        return make_pkey_fkey_graph(
+            db,
+            col_to_stype_dict=col_to_stype_dict,
+            text_embedder_cfg=text_cfg,
+            cache_dir=str(materialized),
+            remove_columns=bundle.task.hidden_columns(),
+        )
+
+    try:
+        data, col_stats_dict = build()
+    except (RuntimeError, EOFError, OSError) as err:
+        # A run stopped while saving leaves a truncated cache file ("failed finding central
+        # directory"). Throw the task's cache away and rebuild it once.
+        print(f"  cache at {materialized} is unreadable ({type(err).__name__}); rebuilding it")
+        import shutil
+
+        shutil.rmtree(materialized, ignore_errors=True)
+        data, col_stats_dict = build()
     return data, col_stats_dict
 
 
