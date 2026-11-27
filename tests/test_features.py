@@ -124,3 +124,17 @@ def test_multi_key_tables_yield_one_junction_per_key():
     })
     shorts = sorted(j.short for j in find_junctions(db, "drivers"))
     assert shorts == ["constructor", "results_race", "standings_race"]
+
+
+def test_counts_are_right_for_dates_before_1970():
+    """rel-f1 starts in 1950: days must stay non-negative or keys bleed into each other."""
+    from reltrial.features import _days
+
+    ev = pd.to_datetime(pd.Series(["1950-05-13", "1951-01-01", "1960-01-01", "1955-01-01"]))
+    keys = np.array([1, 1, 1, 2])
+    q = pd.to_datetime(pd.Series(["1950-01-01", "1952-01-01", "1961-01-01", "1956-01-01"]))
+    qk = np.array([1, 1, 1, 2])
+    n = count_before(keys, _days(ev), qk, _days(q), inclusive=True)
+    assert n.tolist() == [0, 2, 3, 1]
+    cnt, s = sum_before(keys, _days(ev), np.array([1.0, 0.0, 1.0, 1.0]), qk, _days(q), inclusive=True)
+    assert cnt.tolist() == [0, 2, 3, 1] and s.tolist() == [0.0, 1.0, 2.0, 1.0]

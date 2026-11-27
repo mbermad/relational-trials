@@ -30,16 +30,25 @@ import pandas as pd
 
 from relbench.base import Database
 
-KEY_SCALE = 10**6  # days since epoch < 10**6 for any realistic date
+KEY_SCALE = 10**6  # day numbers must lie in [0, KEY_SCALE) for the key encoding to work
+DAY_ZERO = pd.Timestamp("1800-01-01")  # before any date in RelBench (rel-f1 starts in 1950)
 
 
 def _days(ts: pd.Series) -> np.ndarray:
-    """Timestamps -> integer days since the epoch (NaT -> very large)."""
+    """Timestamps -> integer days since 1800-01-01 (NaT -> very large).
+
+    Must be non-negative: ``key * KEY_SCALE + day`` breaks for negative days (a 1950 race
+    would land inside the previous key's range), which is what went wrong on rel-f1 when
+    this counted from 1970.
+    """
     ts = pd.Series(pd.to_datetime(ts))
     # Unit-agnostic (pandas 3 parses to microseconds, pandas 2 to nanoseconds).
-    days = (ts - pd.Timestamp("1970-01-01")) // pd.Timedelta(days=1)
+    days = (ts - DAY_ZERO) // pd.Timedelta(days=1)
     out = np.where(ts.isna().to_numpy(), KEY_SCALE - 1, days.fillna(0).to_numpy())
-    return out.astype(np.int64)
+    out = out.astype(np.int64)
+    if len(out) and (out.min() < 0 or out.max() >= KEY_SCALE):
+        raise ValueError(f"dates out of range for the key encoding: {ts.min()} .. {ts.max()}")
+    return out
 
 
 # --------------------------------------------------------------------------------------

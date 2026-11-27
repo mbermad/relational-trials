@@ -301,6 +301,9 @@ def history_features(bundle: TaskBundle) -> Dict[str, np.ndarray]:
         out[split] = m.to_numpy(dtype=np.float32)
     mu, sd = out["train"].mean(0), out["train"].std(0) + 1e-6
     out = {k: (v - mu) / sd for k, v in out.items()}
+    bad = [c for i, c in enumerate(cols) if not all(np.isfinite(v[:, i]).all() for v in out.values())]
+    if bad:
+        raise ValueError(f"non-finite label-history features: {bad}")
     out["columns"] = np.array(cols)
     print(f"  label-history features for the GNN: {len(cols)} ({', '.join(cols)})")
     return out
