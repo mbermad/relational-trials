@@ -6,7 +6,11 @@
     "rdl_sage_notext",
     "rdl_sage_notext_hist",
     "rdl_sage",
-    "rdl_sage_hist"
+    "rdl_sage_hist",
+    "rdl_sage_tuned",
+    "rdl_sage_hist_tuned",
+    "relgnn",
+    "relgnn_hist"
   ],
-  "n_runs": 42
+  "n_runs": 66
 }
