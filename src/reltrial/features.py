@@ -117,21 +117,39 @@ class Junction:
     entity_fk: str  # column pointing at the entity table (e.g. nct_id)
     other_fk: str  # column pointing at the other entity (e.g. sponsor_id)
     time_col: Optional[str]
+    short: str = ""  # feature-name prefix, e.g. "sponsor"
 
 
 def find_junctions(db: Database, entity_table: str) -> List[Junction]:
+    """Tables linking the entity to other shared entities, one Junction per other key.
+
+    rel-trial: sponsors_studies -> sponsor, ... rel-f1: results links a driver to a race and
+    a constructor, so it yields two junctions. Feature prefixes are the other key's name
+    ("sponsor"), qualified by the table ("results_race") when two tables share a key.
+    """
+    import re
+
     out = []
-    for name, t in db.table_dict.items():
+    for name, t in sorted(db.table_dict.items()):
         fks = dict(t.fkey_col_to_pkey_table)
         to_entity = [c for c, tgt in fks.items() if tgt == entity_table]
         others = [c for c, tgt in fks.items() if tgt != entity_table]
-        if len(to_entity) == 1 and len(others) == 1:
-            other_table = db.table_dict[fks[others[0]]]
+        if len(to_entity) != 1:
+            continue
+        for other in others:
+            other_table = db.table_dict[fks[other]]
             # Skip "junctions" whose other side hangs off the entity itself
             # (e.g. outcome_analyses -> outcomes -> studies): no shared entity there.
             if entity_table in dict(other_table.fkey_col_to_pkey_table).values():
                 continue
-            out.append(Junction(name, to_entity[0], others[0], t.time_col))
+            out.append(Junction(name, to_entity[0], other, t.time_col,
+                                re.sub(r"_?[iI][dD]$", "", other)))
+    counts: Dict[str, int] = {}
+    for j in out:
+        counts[j.short] = counts.get(j.short, 0) + 1
+    for j in out:
+        if counts[j.short] > 1:
+            j.short = f"{j.table}_{j.short}"
     return out
 
 
@@ -198,12 +216,17 @@ class FeatureBuilder:
                             df[c].astype("string").dropna().unique())
             if self.label_history is not None:
                 self.prior = float(self.label_history[self.target_col].mean())
+            # Entities labelled repeatedly (a driver every month, unlike a trial) also get
+            # their own label history.
+            self.repeated_entities = bool(
+                self.label_history is not None
+                and self.label_history[self.entity_col].duplicated().any())
         self._fitted = True
         return self
 
     def _fit_text(self, base: pd.DataFrame) -> None:
-        self.text_cols = [c for c in self.entity_kinds.text
-                          if c in ("brief_title", "official_title")] or self.entity_kinds.text[:2]
+        # Title text only (rel-trial); other entity tables (e.g. driver names) get none.
+        self.text_cols = [c for c in self.entity_kinds.text if c in ("brief_title", "official_title")]
         self.tfidf = self.svd = None
         if not self.text_cols or self.text_dims <= 0:
             return
@@ -289,6 +312,8 @@ class FeatureBuilder:
                                             q_entity, q_day, inclusive=True)
 
         hist = self._label_events()
+        if hist is not None and self.repeated_entities:
+            out = pd.concat([out, self._own_history(hist, q_entity, q_day, row_ids)], axis=1)
         for j in self.junctions:
             jdf = self.db.table_dict[j.table].df
             jdays = _days(jdf[j.time_col]) if j.time_col else np.zeros(len(jdf), np.int64)
@@ -299,7 +324,7 @@ class FeatureBuilder:
             pairs = q.merge(links, on=self.entity_col, how="inner")
             pairs = pairs[(pairs["ldays"] <= pairs["qday"]) & pairs["other"].notna()]
             other = pairs["other"].to_numpy().astype(np.int64)
-            short = j.other_fk.replace("_id", "")
+            short = j.short
 
             # How many trials the linked entity was part of before t.
             prior = count_before(links["other"].fillna(-1).to_numpy().astype(np.int64),
@@ -327,6 +352,26 @@ class FeatureBuilder:
                 out[f"{short}_hist_target_max"] = g["hist_rate"].max().reindex(row_ids).to_numpy()
                 out[f"{short}_hist_n_sum"] = g["hist_n"].sum().reindex(row_ids).to_numpy()
         return out
+
+    def _own_history(self, hist: pd.DataFrame, q_entity: np.ndarray, q_day: np.ndarray,
+                     row_ids: np.ndarray) -> pd.DataFrame:
+        """The entity's own earlier labels known by the seed time: mean, count, last value."""
+        keys = hist[self.entity_col].to_numpy().astype(np.int64)
+        n, s = sum_before(keys, hist["avail"].to_numpy(), hist["y"].to_numpy(),
+                          q_entity.astype(np.int64), q_day, inclusive=True)
+        m = self.smoothing
+        with np.errstate(invalid="ignore", divide="ignore"):
+            mean = (s + m * self.prior) / (n + m)
+        enc = keys * KEY_SCALE + hist["avail"].to_numpy()
+        order = np.argsort(enc, kind="stable")
+        enc, ys, days = enc[order], hist["y"].to_numpy()[order], hist["avail"].to_numpy()[order]
+        hi = np.searchsorted(enc, q_entity.astype(np.int64) * KEY_SCALE + q_day, side="right")
+        has = n > 0
+        last = np.where(has, ys[np.clip(hi - 1, 0, len(ys) - 1)], np.nan)
+        since = np.where(has, q_day - days[np.clip(hi - 1, 0, len(ys) - 1)], np.nan)
+        return pd.DataFrame({"own_hist_target_mean": mean, "own_hist_n_sum": n.astype(float),
+                             "own_hist_target_last": last, "own_hist_days_since_last": since},
+                            index=row_ids)
 
     def _label_events(self) -> Optional[pd.DataFrame]:
         """Known labels as events: (entity, day the label becomes known, value)."""

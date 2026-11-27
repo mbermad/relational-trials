@@ -137,3 +137,14 @@ def test_relgnn_and_tuning_smoke(bundles, tmp_path, monkeypatch):
                     base={"lr": 0.005, "channels": 32, "dropout": 0.0, "weight_decay": 0.0,
                           "num_neighbors": 16})
     assert set(best) == set(rdl.TUNE_SPACE)
+
+
+def test_f1_shaped_dataset_own_history_helps(tmp_path_factory, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    root = synthetic.build_f1(tmp_path_factory.mktemp("f1") / "rel-f1-synthetic")
+    b = data.load_bundle("driver-dnf", str(root))
+    full = lgbm.run(b, "agg", seeds=[0], n_trials=2, out_dir="runs", save_preds="preds")[0]
+    nohist = lgbm.run(b, "agg_nohist", seeds=[0], n_trials=2, out_dir="runs", save_preds="preds")[0]
+    assert full.test["roc_auc"] > nohist.test["roc_auc"] + 0.03
+    X, _ = lgbm.build_features(b, "agg")
+    assert {"own_hist_target_mean", "constructor_prior_trials_mean"} <= set(X["train"].columns)

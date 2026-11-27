@@ -57,15 +57,19 @@ def label_summary(bundle: TaskBundle) -> pd.DataFrame:
 
 def plot_trials_per_year(db: Database, entity_table: str, out: Path, val_ts, test_ts) -> None:
     t = db.table_dict[entity_table]
+    if t.time_col is None:  # e.g. rel-f1 drivers: plot the busiest dated table instead
+        name, t = max(((n, x) for n, x in db.table_dict.items() if x.time_col),
+                      key=lambda nx: len(nx[1].df))
+        entity_table = name
     years = pd.to_datetime(t.df[t.time_col]).dt.year.value_counts().sort_index()
     fig, ax = plt.subplots(figsize=(5.5, 2.4))
     ax.bar(years.index, years.values, color=COLOR, width=0.8)
     for ts, lab in ((val_ts, "val"), (test_ts, "test")):
         ax.axvline(pd.Timestamp(ts).year - 0.5, color="0.3", ls="--", lw=0.8)
         ax.text(pd.Timestamp(ts).year - 0.4, years.max() * 0.95, lab, fontsize=7, color="0.3")
-    ax.set_xlabel("Trial start year")
-    ax.set_ylabel("Trials")
-    ax.set_title("Trials in rel-trial by start year", loc="left")
+    ax.set_xlabel("Year")
+    ax.set_ylabel(f"Rows in '{entity_table}'")
+    ax.set_title(f"'{entity_table}' rows by year, with split boundaries", loc="left")
     fig.tight_layout()
     fig.savefig(out / "trials_per_year.png")
     plt.close(fig)
@@ -84,9 +88,9 @@ def plot_outcome_by_year(bundle: TaskBundle, out: Path) -> None:
     ax.set_ylim(0, 1)
     ax.set_xlabel("Seed year (label window starts)")
     ax.set_ylabel("Share meeting primary outcome")
-    ax.set_title("study-outcome: positive rate by year", loc="left")
+    ax.set_title(f"{bundle.task_name}: positive rate by year", loc="left")
     fig.tight_layout()
-    fig.savefig(out / "outcome_rate_by_year.png")
+    fig.savefig(out / ("outcome_rate_by_year.png" if bundle.task_name == "study-outcome" else f"{bundle.task_name}_rate_by_year.png"))
     plt.close(fig)
 
 
@@ -94,12 +98,13 @@ def plot_adverse_distribution(bundle: TaskBundle, out: Path) -> None:
     y = bundle.train.df[bundle.task.target_col].astype(float)
     fig, ax = plt.subplots(figsize=(5.5, 2.4))
     ax.hist(np.log10(1 + y), bins=40, color=COLOR)
-    ax.set_xlabel("log10(1 + patients with serious adverse events or death)")
+    ax.set_xlabel("log10(1 + patients with serious adverse events or death)"
+                  if bundle.task_name == "study-adverse" else f"log10(1 + {bundle.task.target_col})")
     ax.set_ylabel("Trials (train)")
-    ax.set_title(f"study-adverse: heavy-tailed target (median {y.median():.0f}, "
+    ax.set_title(f"{bundle.task_name}: target (median {y.median():.0f}, "
                  f"95th pct {y.quantile(0.95):.0f})", loc="left")
     fig.tight_layout()
-    fig.savefig(out / "adverse_distribution.png")
+    fig.savefig(out / ("adverse_distribution.png" if bundle.task_name == "study-adverse" else f"{bundle.task_name}_distribution.png"))
     plt.close(fig)
 
 
@@ -160,7 +165,9 @@ def _write_latex(schema: pd.DataFrame, labels: pd.DataFrame, summary: Dict, out:
              f"\\def\\NumRows{{{_human(summary['rows'])}}}",
              f"\\def\\NumCols{{{summary['columns']}}}"]
     for r in summary["labels"]:
-        key = ("Outcome" if r["task"] == "study-outcome" else "Adverse") + r["split"].capitalize()
+        key = {"study-outcome": "Outcome", "study-adverse": "Adverse"}.get(
+            r["task"], "".join(w.capitalize() for w in r["task"].replace("-", " ").split()
+                               if w.isalpha())) + r["split"].capitalize()
         lines.append(f"\\def\\Rows{key}{{{r['rows']:,}}}".replace(",", "{,}"))
         r = {k: v for k, v in r.items() if not (isinstance(v, float) and v != v)}  # drop NaN
         if "positive_rate" in r:

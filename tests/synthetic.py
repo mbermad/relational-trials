@@ -147,3 +147,59 @@ if __name__ == "__main__":
     import sys
 
     print(build(sys.argv[1] if len(sys.argv) > 1 else "data/rel-trial-synthetic"))
+
+
+def build_f1(root: str | Path, n_drivers: int = 60, seed: int = 0) -> Path:
+    """A tiny rel-f1-shaped dataset: drivers race monthly for constructors.
+
+    Unlike rel-trial, each driver is labelled many times, and a driver's latent skill drives
+    its DNF rate, so the driver's own label history is informative.
+    """
+    rng = np.random.default_rng(seed)
+    root = Path(root)
+    (root / "db").mkdir(parents=True, exist_ok=True)
+    skill = rng.normal(0, 1.0, n_drivers)
+    drivers = pd.DataFrame({"driverId": np.arange(n_drivers),
+                            "nationality": rng.choice(["British", "German", "French"], n_drivers),
+                            "dob": pd.to_datetime("1970-01-01") + pd.to_timedelta(rng.integers(0, 9000, n_drivers), "D")})
+    n_con = 8
+    constructors = pd.DataFrame({"constructorId": np.arange(n_con), "nationality": rng.choice(["British", "Italian"], n_con)})
+    race_dates = pd.date_range("2000-01-15", "2012-12-15", freq="MS") + pd.Timedelta(days=14)
+    races = pd.DataFrame({"raceId": np.arange(len(race_dates)), "date": race_dates,
+                          "round": np.arange(len(race_dates)) % 12 + 1})
+    team = rng.integers(0, n_con, n_drivers)
+    rows = []
+    for r, d in enumerate(race_dates):
+        for drv in rng.choice(n_drivers, 20, replace=False):
+            dnf = int(rng.random() < 1 / (1 + np.exp(-(-0.5 - 1.2 * skill[drv]))))
+            rows.append((r, drv, team[drv], d, dnf, int(rng.integers(1, 21))))
+    results = pd.DataFrame(rows, columns=["raceId", "driverId", "constructorId", "date", "statusId", "grid"])
+    results = results.sort_values("date", kind="stable").reset_index(drop=True)
+    results.insert(0, "resultId", np.arange(len(results)))
+    for name, df in {"drivers": drivers, "constructors": constructors, "races": races, "results": results}.items():
+        df.to_parquet(root / "db" / f"{name}.parquet", index=False)
+    DatasetManifest(name="rel-f1-synthetic", val_timestamp="2008-01-01", test_timestamp="2010-01-01",
+                    description="Synthetic rel-f1-shaped data for tests.",
+                    tables={"drivers": TableSpec(pkey="driverId"),
+                            "constructors": TableSpec(pkey="constructorId"),
+                            "races": TableSpec(pkey="raceId", time_col="date"),
+                            "results": TableSpec("resultId", "date", {"raceId": "races", "driverId": "drivers",
+                                                                       "constructorId": "constructors"})},
+                    ).save(root / "manifest.yaml")
+    seeds = pd.date_range("2001-01-01", "2012-01-01", freq="MS")
+    lab = []
+    for t in seeds:
+        w = results[(results["date"] > t) & (results["date"] <= t + pd.Timedelta(days=30))]
+        for drv, g in w.groupby("driverId"):
+            lab.append({"timestamp": t, "driverId": int(drv), "did_not_finish": int(g["statusId"].max())})
+    lab = pd.DataFrame(lab)
+    d = root / "tasks" / "driver-dnf"
+    d.mkdir(parents=True, exist_ok=True)
+    ts = lab["timestamp"]
+    lab[ts < "2008-01-01"].to_parquet(d / "train.parquet", index=False)
+    lab[(ts >= "2008-01-01") & (ts < "2010-01-01")].to_parquet(d / "val.parquet", index=False)
+    lab[ts >= "2010-01-01"].to_parquet(d / "test.parquet", index=False)
+    TaskManifest(name="driver-dnf", kind="external", task_type="binary_classification", entity_table="drivers",
+                 entity_col="driverId", target_col="did_not_finish", time_col="timestamp",
+                 timedelta="30 days").save(d / "manifest.yaml")
+    return root

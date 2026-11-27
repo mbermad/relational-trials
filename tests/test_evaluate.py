@@ -44,3 +44,21 @@ def test_run_record_roundtrip(tmp_path):
     path = rec.save(tmp_path)
     assert json.loads(path.read_text())["test"]["mae"] == 2.0
     assert load_runs(tmp_path)[0]["model"] == "m"
+
+
+def test_bootstrap_compare_and_pairs():
+    from reltrial.significance import compare, default_pairs
+
+    rng = np.random.default_rng(1)
+    y = rng.integers(0, 2, 300).astype(float)
+    good = np.stack([y + rng.normal(0, 0.6, 300) for _ in range(3)])
+    bad = np.stack([rng.normal(0, 1, 300) for _ in range(3)])
+    r = compare(y, good, bad, "roc_auc", n_boot=200)
+    assert r["diff"] > 0.2 and r["ci_low"] > 0 and r["p_a_better"] == 1.0
+    reg = compare(np.zeros(50), np.zeros((2, 50)), np.ones((2, 50)), "nmae", n_boot=50)
+    assert reg["diff"] == pytest.approx(1.0)  # A has 1.0 lower NMAE
+    pairs = default_pairs(["rdl_sage", "rdl_sage_hist", "rdl_sage_tuned", "rdl_sage_hist_tuned",
+                           "lgbm_agg", "lgbm_agg_nohist", "relgnn", "relgnn_hist"])
+    assert ("rdl_sage_hist_tuned", "rdl_sage_tuned", "label history") in pairs
+    assert ("lgbm_agg", "lgbm_agg_nohist", "label history") in pairs
+    assert ("relgnn", "rdl_sage", "RelGNN vs GraphSAGE") in pairs

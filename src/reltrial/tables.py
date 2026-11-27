@@ -53,13 +53,28 @@ def label(model: str) -> str:
         if p.startswith("L") and p[1:].isdigit():
             name += f" ({p[1:]} layers)"
     return name
-COLUMNS = [  # (task, split, metric, header, higher_is_better)
-    ("study-outcome", "val", "roc_auc", "Outcome AUROC (val)", True),
-    ("study-outcome", "test", "roc_auc", "Outcome AUROC (test)", True),
-    ("study-adverse", "val", "nmae", "Adverse NMAE (val)", False),
-    ("study-adverse", "test", "nmae", "Adverse NMAE (test)", False),
-    ("study-adverse", "test", "mae", "Adverse MAE (test)", False),
-]
+TASK_ORDER = ["study-outcome", "study-adverse", "driver-dnf", "driver-top3", "driver-position"]
+TASK_SHORT = {"study-outcome": "Outcome", "study-adverse": "Adverse", "driver-dnf": "DNF",
+              "driver-top3": "Top-3", "driver-position": "Position"}
+
+
+def columns_for(runs: List[dict]):
+    """(task, split, metric, header, higher_is_better) for the tasks present in ``runs``.
+
+    rel-trial keeps the milestone layout: outcome AUROC val/test, adverse NMAE val/test,
+    adverse MAE test.
+    """
+    types = {r["task"]: r["task_type"] for r in runs}
+    tasks = [t for t in TASK_ORDER if t in types] + sorted(set(types) - set(TASK_ORDER))
+    cols = []
+    for t in tasks:
+        short = TASK_SHORT.get(t, t)
+        if types[t] == "binary_classification":
+            cols += [(t, s, "roc_auc", f"{short} AUROC ({s})", True) for s in ("val", "test")]
+        else:
+            cols += [(t, s, "nmae", f"{short} NMAE ({s})", False) for s in ("val", "test")]
+            cols.append((t, "test", "mae", f"{short} MAE (test)", False))
+    return cols
 
 
 def aggregate(runs: List[dict]) -> pd.DataFrame:
@@ -102,6 +117,8 @@ def build(runs_dir: str = "results/runs", out_dir: str = "results/tables") -> Di
         return {}
     agg = aggregate(runs)
     agg.to_csv(out / "aggregate.csv", index=False)
+    COLUMNS = columns_for(runs)
+    tasks = list(dict.fromkeys(c[0] for c in COLUMNS))
     models = [m for m in MODEL_ORDER if m in set(agg.model)] + \
              sorted(set(agg.model) - set(MODEL_ORDER))
 
@@ -126,9 +143,11 @@ def build(runs_dir: str = "results/runs", out_dir: str = "results/tables") -> Di
         md.append(f"| {label(m)} | " + " | ".join(cells) + f" | {seeds} |")
     ref = []
     for m in ("lgbm_table", "rdl_sage"):
-        o = REFERENCE.get(("study-outcome", m))
-        a = REFERENCE.get(("study-adverse", m))
-        ref.append(f"| *RelBench reference: {MODEL_LABELS[m]}* | -- | {o:.3f} | -- | {a:.3f} | -- | 1 |")
+        if not any((c[0], m) in REFERENCE for c in COLUMNS):
+            continue
+        cells = [f"{REFERENCE[(t, m)]:.3f}" if sp == "test" and met != "mae" and (t, m) in REFERENCE
+                 else "--" for t, sp, met, _, _ in COLUMNS]
+        ref.append(f"| *RelBench reference: {MODEL_LABELS[m]}* | " + " | ".join(cells) + " | 1 |")
     md += ref
     md.append("")
     md.append("Mean ± 95% CI over seeds. AUROC: higher is better. NMAE = MAE / train std "
@@ -151,16 +170,18 @@ def build(runs_dir: str = "results/runs", out_dir: str = "results/tables") -> Di
         tex.append(label(m).replace("&", "\\&") + " & " + " & ".join(cells) + r" \\")
     tex.append(r"\midrule")
     for m in ("lgbm_table", "rdl_sage"):
-        o = REFERENCE[("study-outcome", m)]
-        a = REFERENCE[("study-adverse", m)]
-        tex.append(f"\\textit{{RelBench ref.: {MODEL_LABELS[m]}}} & -- & {o:.3f} & -- & {a:.3f} & -- \\\\")
+        if not any((c[0], m) in REFERENCE for c in COLUMNS):
+            continue
+        cells = [f"{REFERENCE[(t, m)]:.3f}" if sp == "test" and met != "mae" and (t, m) in REFERENCE
+                 else "--" for t, sp, met, _, _ in COLUMNS]
+        tex.append(f"\\textit{{RelBench ref.: {MODEL_LABELS[m]}}} & " + " & ".join(cells) + " \\\\")
     (out / "main_rows.tex").write_text("\n".join(tex) + "\n")
 
     # Runtime table rows
     rt = []
     for m in models:
         cells = []
-        for task in ("study-outcome", "study-adverse"):
+        for task in tasks:
             mean, _, _ = _cell(agg, m, task, "-", "train_seconds")
             cells.append("--" if mean is None or math.isnan(mean) else f"{mean:.0f}")
         rt.append(label(m) + " & " + " & ".join(cells) + r" \\")

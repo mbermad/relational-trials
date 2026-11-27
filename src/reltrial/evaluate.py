@@ -28,6 +28,12 @@ REFERENCE = {
     ("study-outcome", "rdl_sage"): 0.6693,
     ("study-adverse", "lgbm_table"): 0.1293,
     ("study-adverse", "rdl_sage"): 0.1293,
+    ("driver-dnf", "lgbm_table"): 0.7255,
+    ("driver-dnf", "rdl_sage"): 0.7261,
+    ("driver-top3", "lgbm_table"): 0.6493,
+    ("driver-top3", "rdl_sage"): 0.6801,
+    ("driver-position", "lgbm_table"): 0.6019,
+    ("driver-position", "rdl_sage"): 0.5782,
 }
 
 

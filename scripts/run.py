@@ -26,7 +26,7 @@ from reltrial import data as D  # noqa: E402
 
 def parse() -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("command", choices=["explore", "lgbm", "rdl", "tables", "all"])
+    p.add_argument("command", choices=["explore", "lgbm", "rdl", "tables", "bootstrap", "all"])
     p.add_argument("--dataset", default=D.DEFAULT_DATASET)
     p.add_argument("--tasks", nargs="+", default=list(D.TASKS))
     p.add_argument("--seeds", nargs="+", type=int, default=[0, 1, 2])
@@ -120,6 +120,11 @@ def main() -> None:
                         model_name=name,
                         save_embeddings=f"{a.results}/embeddings" if a.save_embeddings else None,
                         **kw)
+        elif cmd == "bootstrap":
+            from reltrial import significance
+
+            significance.run({t: bundle(t) for t in a.tasks}, preds_root=preds,
+                             out_dir=f"{a.results}/tables")
         elif cmd == "tables":
             from reltrial import tables
 

@@ -84,3 +84,43 @@ def test_prior_trials_counts_only_earlier_starts(builder):
     f = builder.transform(rows)
     # Before 2014-01-01 the sponsor started trials 0 and 1; by 2015 also trial 2.
     assert f["sponsor_prior_trials_mean"].tolist() == [2, 3]
+
+
+def test_own_history_uses_only_known_labels():
+    d = pd.to_datetime
+    drivers = pd.DataFrame({"driverId": [0, 1], "nationality": ["A", "B"]})
+    races = pd.DataFrame({"raceId": [0], "date": d(["2010-01-01"])})
+    results = pd.DataFrame({"resultId": [0], "raceId": [0], "driverId": [0], "date": d(["2010-01-01"])})
+    db = Database({"drivers": Table(drivers, {}, "driverId", None),
+                   "races": Table(races, {}, "raceId", "date"),
+                   "results": Table(results, {"raceId": "races", "driverId": "drivers"}, "id", "date")})
+    # Driver 0 labelled at three seed times; each label is known 30 days later.
+    hist = pd.DataFrame({"timestamp": d(["2010-01-01", "2010-02-01", "2010-03-01"]),
+                         "driverId": [0, 0, 0], "dnf": [1.0, 0.0, 1.0]})
+    fb = FeatureBuilder(db, "drivers", "driverId", "timestamp", "dnf", pd.Timedelta(days=30),
+                        feature_set="agg", label_history=hist, text_dims=0, smoothing=0.0)
+    fb.fit(hist)
+    q = pd.DataFrame({"timestamp": d(["2010-01-15", "2010-02-20", "2010-03-20"]), "driverId": [0, 0, 0]})
+    f = fb.transform(q)
+    assert f["own_hist_n_sum"].tolist() == [0, 1, 2]
+    assert np.isnan(f["own_hist_target_last"].iloc[0])
+    assert f["own_hist_target_last"].iloc[1] == 1.0 and f["own_hist_target_last"].iloc[2] == 0.0
+    assert f["own_hist_target_mean"].iloc[2] == pytest.approx(0.5)
+
+
+def test_multi_key_tables_yield_one_junction_per_key():
+    from reltrial.features import find_junctions
+
+    d = pd.to_datetime
+    db = Database({
+        "drivers": Table(pd.DataFrame({"driverId": [0]}), {}, "driverId", None),
+        "races": Table(pd.DataFrame({"raceId": [0], "date": d(["2010-01-01"])}), {}, "raceId", "date"),
+        "constructors": Table(pd.DataFrame({"constructorId": [0]}), {}, "constructorId", None),
+        "results": Table(pd.DataFrame({"resultId": [0], "raceId": [0], "driverId": [0], "constructorId": [0],
+                                       "date": d(["2010-01-01"])}),
+                         {"raceId": "races", "driverId": "drivers", "constructorId": "constructors"}, "resultId", "date"),
+        "standings": Table(pd.DataFrame({"sId": [0], "raceId": [0], "driverId": [0], "date": d(["2010-01-01"])}),
+                           {"raceId": "races", "driverId": "drivers"}, "sId", "date"),
+    })
+    shorts = sorted(j.short for j in find_junctions(db, "drivers"))
+    assert shorts == ["constructor", "results_race", "standings_race"]
