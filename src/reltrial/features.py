@@ -429,3 +429,37 @@ class FeatureBuilder:
         avail = pd.to_datetime(h[self.time_col]) + self.timedelta
         return pd.DataFrame({self.entity_col: h[self.entity_col].to_numpy(),
                              "avail": _days(avail), "y": h[self.target_col].astype(float).to_numpy()})
+
+
+def junction_history_columns(db: Database, entity_table: str, entity_col: str,
+                             label_rows: pd.DataFrame, time_col: str, target_col: str,
+                             timedelta: pd.Timedelta, prior: float,
+                             smoothing: float = 5.0) -> Dict[str, pd.DataFrame]:
+    """Label history written INTO the graph (B): new columns on each junction row.
+
+    For a row linking trial k to sponsor s on date d, ``<short>_hist_rate`` is the smoothed
+    success rate of s's earlier trials whose labels were known by d, and ``<short>_hist_n``
+    is log1p of how many. A row's values only use labels known by its own date, and the
+    temporal sampler only shows rows dated before the seed time, so nothing leaks; message
+    passing can then carry a sponsor's track record to the trial like any other column.
+
+    Returns {junction table: DataFrame aligned with that table's rows}.
+    """
+    events = pd.DataFrame({entity_col: label_rows[entity_col].to_numpy(),
+                           "avail": _days(pd.to_datetime(label_rows[time_col]) + timedelta),
+                           "y": label_rows[target_col].astype(float).to_numpy()})
+    out: Dict[str, pd.DataFrame] = {}
+    for j in find_junctions(db, entity_table):
+        jdf = db.table_dict[j.table].df
+        if j.time_col is None:
+            continue
+        other = pd.to_numeric(jdf[j.other_fk], errors="coerce").fillna(-1).to_numpy().astype(np.int64)
+        links = pd.DataFrame({entity_col: jdf[j.entity_fk].to_numpy(), "other": other})
+        hl = links.merge(events, on=entity_col, how="inner")
+        hl = hl[hl["other"] >= 0]
+        n, s = sum_before(hl["other"].to_numpy(), hl["avail"].to_numpy(), hl["y"].to_numpy(),
+                          other, _days(jdf[j.time_col]), inclusive=True)
+        cols = out.setdefault(j.table, pd.DataFrame(index=jdf.index))
+        cols[f"{j.short}_hist_rate"] = (s + smoothing * prior) / (n + smoothing)
+        cols[f"{j.short}_hist_n"] = np.log1p(n)
+    return out

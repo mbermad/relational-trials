@@ -195,3 +195,20 @@ def test_mask_eval_blend_and_figure(tmp_path_factory, tmp_path, monkeypatch):
     assert {"history used at inference", "blend vs single model"} <= set(df["question"])
     out = figures.pareto("res/runs", "res/figures/pareto.png")
     assert (tmp_path / "res/figures/pareto.png").exists() and "driver-dnf" in out
+
+
+@pytest.mark.skipif(any(importlib.util.find_spec(m) is None
+                        for m in ("torch_geometric", "torch_frame", "pyg_lib")),
+                    reason="GNN dependencies (torch_geometric, torch_frame, pyg-lib) not installed")
+def test_rdl_graph_history_smoke(bundles, tmp_path, monkeypatch):
+    """B: history written onto junction rows becomes graph features the GNN trains on."""
+    monkeypatch.chdir(tmp_path)
+    from reltrial import rdl
+
+    b = bundles["study-outcome"]
+    graph, stats = rdl.build_graph(b, cache_dir=str(tmp_path / "cache"), text="hash",
+                                   graph_history=True)
+    assert "sponsor_hist_rate" in stats["sponsors_studies"]
+    recs = rdl.run(b, graph, stats, seeds=[0], epochs=2, channels=32, num_neighbors=16,
+                   batch_size=128, out_dir="runs", save_preds=None, model_name="rdl_sage_ghist")
+    assert 0.0 <= recs[0].test["roc_auc"] <= 1.0

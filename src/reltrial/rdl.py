@@ -124,11 +124,15 @@ class RDLModel(torch.nn.Module):
 # Graph construction (once per task; cached on disk by PyTorch Frame)
 # --------------------------------------------------------------------------------------
 def build_graph(bundle: TaskBundle, cache_dir: str, text: str = "glove",
-                device: Optional[str] = None):
+                device: Optional[str] = None, graph_history: bool = False):
     """Build the relational entity graph for a task.
 
     ``text='none'`` drops text columns entirely (fastest, lowest RAM); ``'hash'`` is an
     offline embedder used by the tests; ``'glove'`` matches RelBench's reference.
+
+    ``graph_history=True`` (B) writes time-safe label history onto every junction row
+    (``features.junction_history_columns``), so message passing itself can carry a sponsor's
+    or condition's track record, instead of adding history at the prediction head.
     """
     db = bundle.dataset.get_db()  # dataset-level db; the task's hidden columns are removed below
     stype_path = Path(cache_dir) / "stypes.json"
@@ -140,6 +144,26 @@ def build_graph(bundle: TaskBundle, cache_dir: str, text: str = "glove",
         stype_path.parent.mkdir(parents=True, exist_ok=True)
         stype_path.write_text(json.dumps(col_to_stype_dict, indent=2, default=str))
 
+    if graph_history:
+        from relbench.base import Database, Table
+
+        from .features import junction_history_columns
+
+        t = bundle.task
+        extra = junction_history_columns(db, t.entity_table, t.entity_col, bundle.history_rows,
+                                         t.time_col, t.target_col, t.timedelta,
+                                         prior=float(bundle.train.df[t.target_col].mean()))
+        tables = dict(db.table_dict)
+        col_to_stype_dict = {k: dict(v) for k, v in col_to_stype_dict.items()}
+        for name, cols in extra.items():
+            old = tables[name]
+            tables[name] = Table(old.df.assign(**{c: cols[c].to_numpy() for c in cols}),
+                                 old.fkey_col_to_pkey_table, old.pkey_col, old.time_col)
+            for c in cols:
+                col_to_stype_dict[name][c] = stype.numerical
+        db = Database(tables)
+        print(f"  history in the graph: {', '.join(f'{n}.{c}' for n, cs in extra.items() for c in cs)}")
+
     text_cfg = None
     if text == "none":
         for cols in col_to_stype_dict.values():
@@ -149,7 +173,8 @@ def build_graph(bundle: TaskBundle, cache_dir: str, text: str = "glove",
         text_cfg = TextEmbedderConfig(text_embedder=make_text_embedder(text, device=device),
                                       batch_size=256)
 
-    materialized = Path(cache_dir) / f"materialized_{bundle.task_name}_{text}"
+    materialized = Path(cache_dir) / (f"materialized_{bundle.task_name}_{text}"
+                                      + ("_ghist" if graph_history else ""))
 
     def build():
         return make_pkey_fkey_graph(

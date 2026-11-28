@@ -181,3 +181,43 @@ def test_latest_rows_keeps_whole_recent_seed_times():
                        "Id": list(range(9)), "y": [0.0] * 9})
     sub = latest_rows(Table(df, {"Id": "users"}, None, "timestamp"), 4).df
     assert sorted(sub["timestamp"].unique()) == list(d(["2020-04-01", "2020-07-01"]))
+
+
+def test_junction_history_columns_only_use_labels_known_by_the_row_date(tmp_path):
+    """B: history written onto junction rows must match a brute-force as-of computation."""
+    import synthetic
+
+    from reltrial import data
+    from reltrial.features import junction_history_columns
+
+    b = data.load_bundle("study-outcome", str(synthetic.build(tmp_path / "rel-trial-synthetic")))
+    t, db = b.task, b.dataset.get_db()
+    prior = float(b.train.df[t.target_col].mean())
+    extra = junction_history_columns(db, t.entity_table, t.entity_col, b.history_rows, t.time_col,
+                                     t.target_col, t.timedelta, prior=prior)
+    assert set(extra) == {"sponsors_studies", "conditions_studies", "facilities_studies"}
+    js = db.table_dict["sponsors_studies"].df
+    lab = b.history_rows.merge(js[["nct_id", "sponsor_id"]], on="nct_id")
+    lab["known"] = pd.to_datetime(lab[t.time_col]) + t.timedelta
+    rng = np.random.default_rng(0)
+    for i in rng.choice(len(js), 40, replace=False):
+        row = js.iloc[i]
+        k = lab[(lab.sponsor_id == row.sponsor_id) & (lab.known <= row.date)]
+        want = (k[t.target_col].sum() + 5 * prior) / (len(k) + 5)
+        assert extra["sponsors_studies"]["sponsor_hist_rate"].iloc[i] == pytest.approx(want)
+        assert extra["sponsors_studies"]["sponsor_hist_n"].iloc[i] == pytest.approx(np.log1p(len(k)))
+
+
+def test_controlled_regimes_differ_only_in_the_quality_column(tmp_path):
+    from reltrial import controlled
+
+    h = controlled.build(tmp_path / "h", "hidden", 1.0, n_trials=800, n_sponsors=40)
+    v = controlled.build(tmp_path / "v", "visible", 1.0, n_trials=800, n_sponsors=40)
+    sh, sv = (pd.read_parquet(p / "db" / "sponsors.parquet") for p in (h, v))
+    assert "quality_score" not in sh and "quality_score" in sv
+    pd.testing.assert_frame_equal(sh, sv.drop(columns="quality_score"))
+    for split in ("train", "val", "test"):
+        a, c = (pd.read_parquet(p / "tasks" / "study-outcome" / f"{split}.parquet") for p in (h, v))
+        pd.testing.assert_frame_equal(a, c)  # identical labels: only visibility changes
+    z = controlled.build(tmp_path / "z", "hidden", 0.0, n_trials=800, n_sponsors=40)
+    assert len(pd.read_parquet(z / "tasks" / "study-outcome" / "train.parquet")) > 0

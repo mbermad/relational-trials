@@ -50,6 +50,8 @@ def label(model: str) -> str:
     name = f"{base} ({', '.join(extra)})" if extra else base
     if "hist" in parts:
         name += " + label history"
+    if "ghist" in parts:
+        name += " + history in the graph"
     if "tuned" in parts:
         name += ", tuned"
     for p in parts:
