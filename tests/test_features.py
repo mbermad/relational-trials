@@ -138,3 +138,46 @@ def test_counts_are_right_for_dates_before_1970():
     assert n.tolist() == [0, 2, 3, 1]
     cnt, s = sum_before(keys, _days(ev), np.array([1.0, 0.0, 1.0, 1.0]), qk, _days(q), inclusive=True)
     assert cnt.tolist() == [0, 2, 3, 1] and s.tolist() == [0.0, 1.0, 2.0, 1.0]
+
+
+def test_activity_counts_for_stack_like_tables():
+    """Posts / comments point at users AND at posts (which point back at users): no junction,
+    so they get activity counts; only rows before the seed time count."""
+    from reltrial.features import find_activity_tables
+
+    d = pd.to_datetime
+    users = pd.DataFrame({"Id": [0, 1], "Location": ["x", "y"]})
+    posts = pd.DataFrame({"PostId": [0, 1, 2], "OwnerUserId": [0, 0, np.nan],
+                          "ParentId": [np.nan, 0, 0],
+                          "CreationDate": d(["2020-01-01", "2020-03-01", "2020-03-05"])})
+    comments = pd.DataFrame({"CId": [0, 1, 2], "UserId": [1, 1, 0], "PostId": [0, 0, 1],
+                             "CreationDate": d(["2020-01-10", "2020-03-20", "2020-03-02"])})
+    db = Database({"users": Table(users, {}, "Id", None),
+                   "posts": Table(posts, {"OwnerUserId": "users", "ParentId": "posts"},
+                                  "PostId", "CreationDate"),
+                   "comments": Table(comments, {"UserId": "users", "PostId": "posts"},
+                                     "CId", "CreationDate")})
+    assert find_activity_tables(db, "users") == [("comments", "UserId"), ("posts", "OwnerUserId")]
+    rows = pd.DataFrame({"timestamp": d(["2020-04-01", "2020-04-01", "2020-01-15"]),
+                         "Id": [0, 1, 1], "y": [1.0, 0.0, 1.0]})
+    fb = FeatureBuilder(db, "users", "Id", "timestamp", "y", pd.Timedelta(days=40),
+                        feature_set="agg", text_dims=0, activity=True).fit(rows)
+    f = fb.transform(rows)
+    assert f["n_posts_OwnerUser"].tolist() == [2, 0, 0]
+    assert f["n_posts_OwnerUser_last_window"].tolist() == [1, 0, 0]  # window = (t - 40 days, t]
+    assert f["n_comments_User"].tolist() == [1, 2, 1]
+    assert f["n_comments_User_last_window"].tolist() == [1, 1, 1]
+    assert f["days_since_comments_User"].tolist()[1] == 12  # 2020-03-20 -> 2020-04-01
+    off = FeatureBuilder(db, "users", "Id", "timestamp", "y", pd.Timedelta(days=31),
+                         feature_set="agg", text_dims=0).fit(rows).transform(rows)
+    assert not any(c.startswith("n_posts") for c in off.columns)  # default: unchanged features
+
+
+def test_latest_rows_keeps_whole_recent_seed_times():
+    from reltrial.data import latest_rows
+
+    d = pd.to_datetime
+    df = pd.DataFrame({"timestamp": d(["2020-01-01"] * 3 + ["2020-04-01"] * 3 + ["2020-07-01"] * 3),
+                       "Id": list(range(9)), "y": [0.0] * 9})
+    sub = latest_rows(Table(df, {"Id": "users"}, None, "timestamp"), 4).df
+    assert sorted(sub["timestamp"].unique()) == list(d(["2020-04-01", "2020-07-01"]))

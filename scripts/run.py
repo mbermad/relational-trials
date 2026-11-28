@@ -31,6 +31,8 @@ def parse() -> argparse.Namespace:
     p.add_argument("--tasks", nargs="+", default=list(D.TASKS))
     p.add_argument("--seeds", nargs="+", type=int, default=[0, 1, 2])
     p.add_argument("--results", default="results")
+    p.add_argument("--max_train", type=int, default=None,
+                   help="train on the most recent ~N training rows only (large datasets)")
     # LightGBM
     p.add_argument("--features", nargs="+", default=["table", "agg"],
                    choices=["table", "agg", "agg_nohist"])
@@ -71,7 +73,7 @@ def main() -> None:
         nonlocal dataset
         if task not in bundles:
             print(f"Loading {a.dataset} / {task} ...")
-            bundles[task] = D.load_bundle(task, a.dataset, dataset=dataset)
+            bundles[task] = D.load_bundle(task, a.dataset, dataset=dataset, max_train=a.max_train)
             dataset = bundles[task].dataset
         return bundles[task]
 

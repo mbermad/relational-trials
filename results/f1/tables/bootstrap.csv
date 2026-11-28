@@ -1,0 +1,43 @@
+task,question,A,B,split,metric,seeds,diff,ci_low,ci_high,p_a_better
+driver-dnf,label history,rdl_sage_hist,rdl_sage,val,roc_auc,3v3,-0.050708994708994815,-0.08004864843011404,-0.020524333247957226,0.0005
+driver-dnf,label history,rdl_sage_hist,rdl_sage,test,roc_auc,3v3,-0.05223084305209902,-0.07424859394433882,-0.030153235804384754,0.0
+driver-dnf,label history,relgnn_hist,relgnn,val,roc_auc,3v3,-0.08192592592592596,-0.12194636312536523,-0.042913762914124125,0.0
+driver-dnf,label history,relgnn_hist,relgnn,test,roc_auc,3v3,-0.0005855658029570998,-0.02665892227317162,0.024580926916141006,0.4825
+driver-dnf,label history,lgbm_agg,lgbm_agg_nohist,val,roc_auc,3v3,0.05065759637188205,0.018938431493174708,0.0853503027914889,0.9995
+driver-dnf,label history,lgbm_agg,lgbm_agg_nohist,test,roc_auc,3v3,0.0064932741261244376,-0.009185764120587584,0.022700370407171985,0.7845
+driver-dnf,RelGNN vs GraphSAGE,relgnn,rdl_sage,val,roc_auc,3v3,0.035047619047618994,0.005125818375950863,0.06378699692316296,0.9915
+driver-dnf,RelGNN vs GraphSAGE,relgnn,rdl_sage,test,roc_auc,3v3,-0.04087574618975576,-0.06012135226266885,-0.022175779016560204,0.0
+driver-dnf,RelGNN vs GraphSAGE (with history),relgnn_hist,rdl_sage_hist,val,roc_auc,3v3,0.003830687830687851,-0.014797263513906584,0.02178354892462036,0.6515
+driver-dnf,RelGNN vs GraphSAGE (with history),relgnn_hist,rdl_sage_hist,test,roc_auc,3v3,0.010769531059386162,-0.005410316982344646,0.02731999989825888,0.9005
+driver-dnf,LightGBM vs best GNN,lgbm_agg,rdl_sage_hist,val,roc_auc,3v3,-0.028613756613756536,-0.05064819291778109,-0.006408740503415689,0.0045
+driver-dnf,LightGBM vs best GNN,lgbm_agg,rdl_sage_hist,test,roc_auc,3v3,-0.011901624945103162,-0.027822316866020373,0.003993664051708198,0.0805
+driver-dnf,LightGBM (own row) vs GNN,lgbm_table,rdl_sage,val,roc_auc,3v3,-0.14331065759637185,-0.18707519222888705,-0.09750903181292421,0.0
+driver-dnf,LightGBM (own row) vs GNN,lgbm_table,rdl_sage,test,roc_auc,3v3,-0.1082483449633207,-0.15009980039920157,-0.0690205904954239,0.0
+driver-top3,label history,rdl_sage_hist,rdl_sage,val,roc_auc,3v3,0.07369514970167168,0.03476510350779055,0.11302158420228581,0.9995
+driver-top3,label history,rdl_sage_hist,rdl_sage,test,roc_auc,3v3,-0.3529625661928651,-0.4213394096734308,-0.2849389477968346,0.0
+driver-top3,label history,relgnn_hist,relgnn,val,roc_auc,3v3,-0.0003762699109493006,-0.02465210692007385,0.024421837676818568,0.4975
+driver-top3,label history,relgnn_hist,relgnn,test,roc_auc,3v3,-0.34368467809364567,-0.4122962516609058,-0.27297459822045367,0.0
+driver-top3,label history,lgbm_agg,lgbm_agg_nohist,val,roc_auc,3v3,0.10890923533592534,0.07425922621575538,0.1468854956469823,1.0
+driver-top3,label history,lgbm_agg,lgbm_agg_nohist,test,roc_auc,3v3,0.07523123954849487,0.04708808668697701,0.10368566380265086,1.0
+driver-top3,RelGNN vs GraphSAGE,relgnn,rdl_sage,val,roc_auc,3v3,0.07887334038092841,0.05239917588226349,0.10688446749337985,1.0
+driver-top3,RelGNN vs GraphSAGE,relgnn,rdl_sage,test,roc_auc,3v3,-0.01209761705685608,-0.03199706395230616,0.007001139644587943,0.1025
+driver-top3,RelGNN vs GraphSAGE (with history),relgnn_hist,rdl_sage_hist,val,roc_auc,3v3,0.004801920768307433,-0.003586073769767503,0.013967372844633825,0.8605
+driver-top3,RelGNN vs GraphSAGE (with history),relgnn_hist,rdl_sage_hist,test,roc_auc,3v3,-0.002819728957636658,-0.016709646161540335,0.011055236050691086,0.339
+driver-top3,LightGBM vs best GNN,lgbm_agg,rdl_sage_hist,val,roc_auc,3v3,0.011141770140892127,0.0011404969161183279,0.022504112539052518,0.985
+driver-top3,LightGBM vs best GNN,lgbm_agg,rdl_sage_hist,test,roc_auc,3v3,0.30176978818283157,0.24993876374989402,0.35707506038661824,1.0
+driver-top3,LightGBM (own row) vs GNN,lgbm_table,rdl_sage,val,roc_auc,3v3,-0.10298447737303873,-0.15474675823046402,-0.05634397524383684,0.0
+driver-top3,LightGBM (own row) vs GNN,lgbm_table,rdl_sage,test,roc_auc,3v3,-0.14468366778149389,-0.1859619420925544,-0.1037620319020042,0.0
+driver-position,label history,rdl_sage_hist,rdl_sage,val,nmae,3v3,0.015182287797906036,0.0008174657580560422,0.03057805743092572,0.981
+driver-position,label history,rdl_sage_hist,rdl_sage,test,nmae,3v3,0.015732837271721145,-0.009068676305093249,0.040316381926723995,0.893
+driver-position,label history,relgnn_hist,relgnn,val,nmae,3v3,0.004427547484449235,-0.009779745200868864,0.019628141689288236,0.7265
+driver-position,label history,relgnn_hist,relgnn,test,nmae,3v3,0.05058495837170096,0.03147018270782628,0.07044354543931779,1.0
+driver-position,label history,lgbm_agg,lgbm_agg_nohist,val,nmae,3v3,0.0662091499971561,0.04985330547263433,0.08381288464249019,1.0
+driver-position,label history,lgbm_agg,lgbm_agg_nohist,test,nmae,3v3,0.00775753393381573,-0.008613722338749496,0.02356488110593894,0.8145
+driver-position,RelGNN vs GraphSAGE,relgnn,rdl_sage,val,nmae,3v3,0.013716502825018018,-0.001675535024414193,0.02921183168900839,0.962
+driver-position,RelGNN vs GraphSAGE,relgnn,rdl_sage,test,nmae,3v3,-0.02036246795921326,-0.04408164262454159,0.0014040214234897718,0.034
+driver-position,RelGNN vs GraphSAGE (with history),relgnn_hist,rdl_sage_hist,val,nmae,3v3,0.0029617625115612167,-0.005453423215597196,0.011423843750904055,0.7675
+driver-position,RelGNN vs GraphSAGE (with history),relgnn_hist,rdl_sage_hist,test,nmae,3v3,0.014489653140766556,-0.002841469870358271,0.0319071217928249,0.951
+driver-position,LightGBM vs best GNN,lgbm_agg,rdl_sage_hist,val,nmae,3v3,-0.0009405960698712357,-0.01399589975672069,0.012748860457128216,0.443
+driver-position,LightGBM vs best GNN,lgbm_agg,rdl_sage_hist,test,nmae,3v3,0.03717627269426982,0.015327318502829765,0.06050783246327715,0.999
+driver-position,LightGBM (own row) vs GNN,lgbm_table,rdl_sage,val,nmae,3v3,-0.07798316357500751,-0.10297392143437636,-0.05322192245079097,0.0
+driver-position,LightGBM (own row) vs GNN,lgbm_table,rdl_sage,test,nmae,3v3,0.025074410374369083,0.0009656223329574693,0.04973466057494051,0.9815

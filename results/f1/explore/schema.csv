@@ -1,0 +1,10 @@
+table,rows,columns,primary_key,time_col,foreign_keys,time_range
+standings,28115,7,driverStandingsId,date,"raceId->races, driverId->drivers",1950-05 to 2009-11
+results,20323,15,resultId,date,"raceId->races, driverId->drivers, constructorId->constructors",1950-05 to 2009-11
+constructor_standings,10170,7,constructorStandingsId,date,"raceId->races, constructorId->constructors",1958-01 to 2009-11
+constructor_results,9408,5,constructorResultsId,date,"raceId->races, constructorId->constructors",1956-01 to 2009-11
+qualifying,4082,7,qualifyId,date,"raceId->races, driverId->drivers, constructorId->constructors",1994-03 to 2009-10
+drivers,857,7,driverId,,,
+races,820,7,raceId,date,circuitId->circuits,1950-05 to 2009-11
+constructors,211,4,constructorId,,,
+circuits,77,8,circuitId,,,

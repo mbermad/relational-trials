@@ -148,3 +148,19 @@ def test_f1_shaped_dataset_own_history_helps(tmp_path_factory, tmp_path, monkeyp
     assert full.test["roc_auc"] > nohist.test["roc_auc"] + 0.03
     X, _ = lgbm.build_features(b, "agg")
     assert {"own_hist_target_mean", "constructor_prior_trials_mean"} <= set(X["train"].columns)
+
+
+def test_max_train_subsamples_fitting_rows_but_keeps_history(tmp_path_factory):
+    root = synthetic.build_f1(tmp_path_factory.mktemp("f1sub") / "rel-f1-synthetic")
+    full = data.load_bundle("driver-dnf", str(root))
+    n = len(full.train.df) // 4
+    sub = data.load_bundle("driver-dnf", str(root), dataset=full.dataset, max_train=n)
+    assert len(sub.train.df) <= n + full.train.df[full.task.time_col].value_counts().max()
+    assert len(sub.train.df) < len(full.train.df) and len(sub.train_full.df) == len(full.train.df)
+    assert sub.train.df[sub.task.time_col].min() > full.train.df[full.task.time_col].min()
+    assert len(sub.history_rows) == len(full.history_rows)
+    Xs, _ = lgbm.build_features(sub, "agg")
+    Xf, _ = lgbm.build_features(full, "agg")
+    # The latest training rows see the same history either way.
+    tail = Xf["train"].iloc[-len(Xs["train"]):]["own_hist_n_sum"].to_numpy()
+    assert (Xs["train"]["own_hist_n_sum"].to_numpy() == tail).all()

@@ -32,6 +32,20 @@ class TaskBundle:
     train: Table
     val: Table
     test: Table  # WITH labels, for offline evaluation
+    train_full: Optional[Table] = None  # all training labels, when ``train`` is subsampled
+
+    @property
+    def history_rows(self) -> pd.DataFrame:
+        """Labels usable as history: the FULL train split plus val (each still used only
+        once known). Subsampling the training rows never shrinks the history."""
+        tr = (self.train_full if self.train_full is not None else self.train).df
+        return pd.concat([tr, self.val.df], ignore_index=True)
+
+    @property
+    def base_name(self) -> str:
+        from pathlib import Path
+
+        return Path(self.dataset_name).name.replace("-synthetic", "")
 
     @property
     def is_classification(self) -> bool:
@@ -56,8 +70,17 @@ class TaskBundle:
         return float(std)
 
 
+def latest_rows(table: Table, n: int) -> Table:
+    """The training rows from the most recent seed times, whole seed times only, ~n rows."""
+    df = table.df
+    counts = df[table.time_col].value_counts().sort_index(ascending=False)
+    keep = counts.index[counts.cumsum().shift(fill_value=0) < n]
+    sub = df[df[table.time_col].isin(keep)].reset_index(drop=True)
+    return Table(sub, table.fkey_col_to_pkey_table, table.pkey_col, table.time_col)
+
+
 def load_bundle(task_name: str, dataset_name: str = DEFAULT_DATASET,
-                dataset: Optional[Dataset] = None) -> TaskBundle:
+                dataset: Optional[Dataset] = None, max_train: Optional[int] = None) -> TaskBundle:
     """Load a dataset + task and all three label tables.
 
     ``dataset_name`` may be a bare RelBench name ("rel-trial"), a Hub spec, or a local
@@ -68,13 +91,20 @@ def load_bundle(task_name: str, dataset_name: str = DEFAULT_DATASET,
     if task.task_type not in (TaskType.BINARY_CLASSIFICATION, TaskType.REGRESSION):
         raise ValueError(f"Unsupported task type for {task_name}: {task.task_type}")
     db = task.get_db()  # hold on to it: RelBench 3 re-reads data on every call
+    train = task.get_table("train")
+    full = None
+    if max_train and len(train.df) > max_train:
+        full, train = train, latest_rows(train, max_train)
+        print(f"  training on the latest {len(train.df):,} of {len(full.df):,} train rows "
+              f"(from {train.df[train.time_col].min():%Y-%m-%d})")
     return TaskBundle(
         dataset_name=dataset_name,
         task_name=task_name,
         dataset=ds,
         task=task,
         db=db,
-        train=task.get_table("train"),
+        train=train,
         val=task.get_table("val"),
         test=task.get_table("test", mask_input_cols=False),
+        train_full=full,
     )

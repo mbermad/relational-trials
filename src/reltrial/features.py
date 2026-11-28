@@ -25,6 +25,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
+import re
+
 import numpy as np
 import pandas as pd
 
@@ -162,6 +164,22 @@ def find_junctions(db: Database, entity_table: str) -> List[Junction]:
     return out
 
 
+def find_activity_tables(db: Database, entity_table: str) -> List[tuple]:
+    """(table, fk) for dated tables pointing at the entity that are neither satellites nor
+    junctions: rel-stack's posts / comments / votes by a user, whose other key leads back to
+    users. These get activity counts (all time and in the last window)."""
+    junction_tables = {j.table for j in find_junctions(db, entity_table)}
+    satellites = set(find_satellites(db, entity_table))
+    out = []
+    for name, t in sorted(db.table_dict.items()):
+        if name in junction_tables or name in satellites or t.time_col is None:
+            continue
+        for c, tgt in t.fkey_col_to_pkey_table.items():
+            if tgt == entity_table:
+                out.append((name, c))
+    return out
+
+
 def find_satellites(db: Database, entity_table: str) -> List[str]:
     """Tables whose only foreign key points at the entity table (designs, outcomes, ...)."""
     out = []
@@ -182,7 +200,7 @@ class FeatureBuilder:
     def __init__(self, db: Database, entity_table: str, entity_col: str, time_col: str,
                  target_col: str, timedelta: pd.Timedelta, feature_set: str = "table",
                  label_history: Optional[pd.DataFrame] = None, text_dims: int = 32,
-                 smoothing: float = 5.0):
+                 smoothing: float = 5.0, activity: bool = False):
         if feature_set not in ("table", "agg"):
             raise ValueError("feature_set must be 'table' or 'agg'")
         self.db = db
@@ -193,6 +211,7 @@ class FeatureBuilder:
         self.label_history = label_history
         self.text_dims = text_dims
         self.smoothing = smoothing
+        self.activity = activity  # off for rel-trial / rel-f1 to keep their published features
         self._fitted = False
 
     # ---- fitting ----------------------------------------------------------------------
@@ -212,6 +231,8 @@ class FeatureBuilder:
         if self.feature_set == "agg":
             self.junctions = find_junctions(self.db, self.entity_table)
             self.satellites = find_satellites(self.db, self.entity_table)
+            self.activity_tables = (find_activity_tables(self.db, self.entity_table)
+                                    if self.activity else [])
             self.one_to_one = {}
             for name in self.satellites:
                 df, spk, stime, sfks = _table_meta(self.db, name)
@@ -319,6 +340,24 @@ class FeatureBuilder:
                 continue
             out[f"n_{name}"] = count_before(df[fk].to_numpy(), _days(df[stime]),
                                             q_entity, q_day, inclusive=True)
+
+        # Activity in tables that point at the entity (posts / comments / votes per user):
+        # all rows before t, rows in the last window, and days since the latest one.
+        window = max(1, int(self.timedelta / pd.Timedelta(days=1)))
+        for name, fk in self.activity_tables:
+            df, _, stime, _ = _table_meta(self.db, name)
+            keys = pd.to_numeric(df[fk], errors="coerce").fillna(-1).to_numpy().astype(np.int64)
+            days = _days(df[stime])
+            qk = q_entity.astype(np.int64)
+            n_all = count_before(keys, days, qk, q_day, inclusive=True)
+            n_old = count_before(keys, days, qk, q_day - window, inclusive=True)
+            pre = f"{name}_{re.sub(r'_?[iI][dD]$', '', fk)}"
+            out[f"n_{pre}"] = n_all
+            out[f"n_{pre}_last_window"] = n_all - n_old
+            enc = np.sort(keys * KEY_SCALE + days)
+            hi = np.searchsorted(enc, qk * KEY_SCALE + q_day, side="right")
+            last = enc[np.clip(hi - 1, 0, len(enc) - 1)] - qk * KEY_SCALE if len(enc) else 0
+            out[f"days_since_{pre}"] = np.where(n_all > 0, q_day - last, np.nan)
 
         hist = self._label_events()
         if hist is not None and self.repeated_entities:

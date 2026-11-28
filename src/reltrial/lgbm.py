@@ -43,11 +43,14 @@ def build_features(bundle: TaskBundle, feature_set: str):
     history = None
     if feature_set == "agg":
         # Train + val labels, used only once known (label time + timedelta <= seed time).
-        history = pd.concat([bundle.train.df, bundle.val.df], ignore_index=True)
+        history = bundle.history_rows
     fb = FeatureBuilder(bundle.db, task.entity_table, task.entity_col, task.time_col,
                         task.target_col, task.timedelta,
                         feature_set="table" if feature_set == "table" else "agg",
-                        label_history=history)
+                        label_history=history,
+                        # Activity counts are new with rel-stack; rel-trial / rel-f1 keep
+                        # the exact features their published numbers were made with.
+                        activity=bundle.base_name not in ("rel-trial", "rel-f1"))
     fb.fit(bundle.train.df)
     X = {s: _clean_names(fb.transform(bundle.split(s).df)) for s in ("train", "val", "test")}
     y = {s: bundle.split(s).df[task.target_col].to_numpy(dtype=float) for s in X}

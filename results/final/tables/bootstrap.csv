@@ -1,0 +1,45 @@
+task,question,A,B,split,metric,seeds,diff,ci_low,ci_high,p_a_better
+study-outcome,label history,rdl_sage_hist,rdl_sage,val,roc_auc,3v3,0.03329774227607052,0.008959742535788346,0.05867592353889356,0.996
+study-outcome,label history,rdl_sage_hist,rdl_sage,test,roc_auc,3v3,0.0346114884635097,0.006563647913038187,0.0635540486773736,0.992
+study-outcome,label history,rdl_sage_hist_tuned,rdl_sage_tuned,val,roc_auc,3v3,0.0292114719359301,0.002149331813664024,0.05673447578659698,0.982
+study-outcome,label history,rdl_sage_hist_tuned,rdl_sage_tuned,test,roc_auc,3v3,-0.0037462819690128324,-0.03292114051628224,0.026912024603612042,0.401
+study-outcome,label history,rdl_sage_notext_hist,rdl_sage_notext,val,roc_auc,3v3,0.04194979427177581,0.014349281141204429,0.0687667747853392,0.999
+study-outcome,label history,rdl_sage_notext_hist,rdl_sage_notext,test,roc_auc,3v3,0.06030777426658451,0.030906499118672257,0.0892408426224464,1.0
+study-outcome,label history,relgnn_hist,relgnn,val,roc_auc,3v3,0.02667840129140442,0.001294029298179611,0.05210882355497321,0.981
+study-outcome,label history,relgnn_hist,relgnn,test,roc_auc,3v3,0.029772498880050402,0.0016327282055316529,0.06003714978783063,0.982
+study-outcome,label history,lgbm_agg,lgbm_agg_nohist,val,roc_auc,3v3,0.0015472430333109966,-0.014523979209152429,0.017071362221769634,0.5805
+study-outcome,label history,lgbm_agg,lgbm_agg_nohist,test,roc_auc,3v3,0.01802715322928894,-0.00044006594096779853,0.037391456826333165,0.973
+study-outcome,text,rdl_sage,rdl_sage_notext,val,roc_auc,3v3,0.005642448366906527,-0.020345662362911462,0.029991135265084817,0.6635
+study-outcome,text,rdl_sage,rdl_sage_notext,test,roc_auc,3v3,0.026826325071939272,-0.002251409516361169,0.05641639222083031,0.963
+study-outcome,tuning,rdl_sage_tuned,rdl_sage,val,roc_auc,3v3,0.0034131674998548744,-0.01489082046715282,0.020102884663953838,0.6625
+study-outcome,tuning,rdl_sage_tuned,rdl_sage,test,roc_auc,3v3,0.03485868455357399,0.01595432050950776,0.05436554406102283,1.0
+study-outcome,RelGNN vs GraphSAGE,relgnn,rdl_sage,val,roc_auc,3v3,-0.0022531075162653957,-0.023947422682788565,0.018644589946554904,0.417
+study-outcome,RelGNN vs GraphSAGE,relgnn,rdl_sage,test,roc_auc,3v3,-0.00489750947416856,-0.02830478203940588,0.01792937836514526,0.3265
+study-outcome,RelGNN vs GraphSAGE (with history),relgnn_hist,rdl_sage_hist,val,roc_auc,3v3,-0.008872448500931496,-0.02440011416495661,0.006558224999267843,0.1285
+study-outcome,RelGNN vs GraphSAGE (with history),relgnn_hist,rdl_sage_hist,test,roc_auc,3v3,-0.009736499057627857,-0.02667436382367129,0.005851727371348248,0.116
+study-outcome,LightGBM vs best GNN,lgbm_agg,rdl_sage_hist,val,roc_auc,3v3,0.02857783198340469,0.008050489310230243,0.048631421364971825,0.996
+study-outcome,LightGBM vs best GNN,lgbm_agg,rdl_sage_hist,test,roc_auc,3v3,0.03568502576893129,0.011864259125371215,0.05863802234498718,0.9975
+study-outcome,LightGBM (own row) vs GNN,lgbm_table,rdl_sage,val,roc_auc,3v3,0.05044027180250099,0.02320065311976556,0.07649579929306091,1.0
+study-outcome,LightGBM (own row) vs GNN,lgbm_table,rdl_sage,test,roc_auc,3v3,0.05380601261608131,0.02429088481555474,0.08253391695456828,1.0
+study-adverse,label history,rdl_sage_hist,rdl_sage,val,nmae,3v3,-0.00014633021408896885,-0.0011603423528223273,0.0008794380555180733,0.3865
+study-adverse,label history,rdl_sage_hist,rdl_sage,test,nmae,3v3,-0.0008597421749087231,-0.0020325469312748178,0.0002772129990538552,0.0745
+study-adverse,label history,rdl_sage_hist_tuned,rdl_sage_tuned,val,nmae,3v3,6.891808961109747e-05,-0.0008916293673426001,0.0010027637854331873,0.561
+study-adverse,label history,rdl_sage_hist_tuned,rdl_sage_tuned,test,nmae,3v3,-0.0009132725572233713,-0.002021143890818801,0.00021394990139880093,0.06
+study-adverse,label history,rdl_sage_notext_hist,rdl_sage_notext,val,nmae,3v3,-5.214911525411314e-05,-0.0012959663760333411,0.001226588722243818,0.4805
+study-adverse,label history,rdl_sage_notext_hist,rdl_sage_notext,test,nmae,3v3,0.001930290330184159,0.0006154056388312055,0.003280700278453633,0.997
+study-adverse,label history,relgnn_hist,relgnn,val,nmae,3v3,0.0006048937827386747,-0.0006593124543590595,0.0019372332102301924,0.814
+study-adverse,label history,relgnn_hist,relgnn,test,nmae,3v3,0.0009521590035416472,-0.00040371834282231997,0.0023349260086382357,0.9125
+study-adverse,label history,lgbm_agg,lgbm_agg_nohist,val,nmae,3v3,0.0017140197486065767,-0.00013518661878959414,0.0036013661871446877,0.965
+study-adverse,label history,lgbm_agg,lgbm_agg_nohist,test,nmae,3v3,0.0027747326233621417,-0.00014756879049287628,0.005607113104225534,0.969
+study-adverse,text,rdl_sage,rdl_sage_notext,val,nmae,3v3,0.005448408205826372,0.0032099448210501807,0.00771735192598792,1.0
+study-adverse,text,rdl_sage,rdl_sage_notext,test,nmae,3v3,0.008357973383361889,0.005467430486284349,0.011199822104393745,1.0
+study-adverse,tuning,rdl_sage_tuned,rdl_sage,val,nmae,3v3,-0.00018384864907536325,-0.0012611349902637563,0.0009474072789550142,0.376
+study-adverse,tuning,rdl_sage_tuned,rdl_sage,test,nmae,3v3,0.00013276381707183482,-0.0009741845878504012,0.0012060216505512958,0.5735
+study-adverse,RelGNN vs GraphSAGE,relgnn,rdl_sage,val,nmae,3v3,-0.003632292941239762,-0.005667767721707181,-0.001513637788097476,0.0
+study-adverse,RelGNN vs GraphSAGE,relgnn,rdl_sage,test,nmae,3v3,-0.005005976632104114,-0.007231231198484003,-0.002973816700030456,0.0
+study-adverse,RelGNN vs GraphSAGE (with history),relgnn_hist,rdl_sage_hist,val,nmae,3v3,-0.0028810689444121185,-0.004740020336631229,-0.0009483286916113135,0.001
+study-adverse,RelGNN vs GraphSAGE (with history),relgnn_hist,rdl_sage_hist,test,nmae,3v3,-0.003194075453653744,-0.0055493112211950175,-0.001106841385290099,0.002
+study-adverse,LightGBM vs best GNN,lgbm_agg,rdl_sage_hist,val,nmae,3v3,0.03038415219695198,0.020219781767485043,0.041713331057476905,1.0
+study-adverse,LightGBM vs best GNN,lgbm_agg,rdl_sage_hist,test,nmae,3v3,0.028707259703185176,0.017206976445226056,0.041516171376009554,1.0
+study-adverse,LightGBM (own row) vs GNN,lgbm_table,rdl_sage,val,nmae,3v3,0.024422782675744395,0.015008985820921727,0.034799500409331136,1.0
+study-adverse,LightGBM (own row) vs GNN,lgbm_table,rdl_sage,test,nmae,3v3,0.023968802493743557,0.012755344452069335,0.03538482676252631,1.0

@@ -1,0 +1,30 @@
+{
+  "task": "driver-dnf",
+  "model": "lgbm_agg_nohist",
+  "seed": 1,
+  "task_type": "binary_classification",
+  "val": {
+    "roc_auc": 0.6334331065759637
+  },
+  "test": {
+    "roc_auc": 0.667823159127507
+  },
+  "train_seconds": 3.579844202000004,
+  "infer_seconds_per_1k": 0.003526450142482303,
+  "peak_gpu_mem_mb": null,
+  "params": {
+    "num_leaves": 152,
+    "learning_rate": 0.015794760483148672,
+    "min_child_samples": 43,
+    "feature_fraction": 0.545376522809561,
+    "bagging_fraction": 0.7901661929934254,
+    "lambda_l2": 0.01565973942748244,
+    "best_iteration": 3,
+    "n_features": 20,
+    "n_trials": 20,
+    "feature_seconds": 0.7555475610000144
+  },
+  "notes": "",
+  "timestamp": "2026-11-27 23:17:26",
+  "host": "afecc7c41361"
+}

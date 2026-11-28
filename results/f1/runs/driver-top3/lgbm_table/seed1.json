@@ -1,0 +1,30 @@
+{
+  "task": "driver-top3",
+  "model": "lgbm_table",
+  "seed": 1,
+  "task_type": "binary_classification",
+  "val": {
+    "roc_auc": 0.6593055132500762
+  },
+  "test": {
+    "roc_auc": 0.6302845422240803
+  },
+  "train_seconds": 0.1014855329999591,
+  "infer_seconds_per_1k": 0.0036831446277950115,
+  "peak_gpu_mem_mb": null,
+  "params": {
+    "num_leaves": 105,
+    "learning_rate": 0.030608028624359088,
+    "min_child_samples": 34,
+    "feature_fraction": 0.9447439171745001,
+    "bagging_fraction": 0.9670217579781248,
+    "lambda_l2": 0.026988626732963816,
+    "best_iteration": 59,
+    "n_features": 5,
+    "n_trials": 20,
+    "feature_seconds": 0.030152386999816372
+  },
+  "notes": "",
+  "timestamp": "2026-11-27 21:10:50",
+  "host": "58e6d5333711"
+}

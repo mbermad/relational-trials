@@ -1,0 +1,10 @@
+LightGBM (trial table) & 0.620\,{\scriptsize$\pm$0.030} & 0.626\,{\scriptsize$\pm$0.066} & 0.661\,{\scriptsize$\pm$0.020} & 0.635\,{\scriptsize$\pm$0.015} & 0.523\,{\scriptsize$\pm$0.006} & 0.590\,{\scriptsize$\pm$0.007} & 4.15\,{\scriptsize$\pm$0.05} \\
+LightGBM + aggregates, no label history & 0.633\,{\scriptsize$\pm$0.061} & 0.664\,{\scriptsize$\pm$0.041} & 0.740\,{\scriptsize$\pm$0.049} & 0.653\,{\scriptsize$\pm$0.114} & 0.497\,{\scriptsize$\pm$0.016} & 0.570\,{\scriptsize$\pm$0.010} & 4.00\,{\scriptsize$\pm$0.07} \\
+LightGBM + aggregates & 0.684\,{\scriptsize$\pm$0.051} & 0.671\,{\scriptsize$\pm$0.038} & \textbf{0.849\,{\scriptsize$\pm$0.010}} & 0.728\,{\scriptsize$\pm$0.023} & 0.430\,{\scriptsize$\pm$0.009} & \textbf{0.562\,{\scriptsize$\pm$0.035}} & \textbf{3.95\,{\scriptsize$\pm$0.25}} \\
+GNN (GloVe text) & 0.763\,{\scriptsize$\pm$0.024} & \textbf{0.735\,{\scriptsize$\pm$0.066}} & 0.764\,{\scriptsize$\pm$0.045} & \textbf{0.779\,{\scriptsize$\pm$0.033}} & 0.445\,{\scriptsize$\pm$0.012} & 0.615\,{\scriptsize$\pm$0.030} & 4.32\,{\scriptsize$\pm$0.21} \\
+GNN (GloVe text) + label history & 0.712\,{\scriptsize$\pm$0.020} & 0.682\,{\scriptsize$\pm$0.053} & 0.838\,{\scriptsize$\pm$0.006} & 0.426\,{\scriptsize$\pm$0.234} & 0.430\,{\scriptsize$\pm$0.006} & 0.599\,{\scriptsize$\pm$0.093} & 4.21\,{\scriptsize$\pm$0.65} \\
+RelGNN (GloVe text) & \textbf{0.798\,{\scriptsize$\pm$0.017}} & 0.694\,{\scriptsize$\pm$0.016} & 0.843\,{\scriptsize$\pm$0.044} & 0.767\,{\scriptsize$\pm$0.046} & 0.431\,{\scriptsize$\pm$0.017} & 0.635\,{\scriptsize$\pm$0.090} & 4.46\,{\scriptsize$\pm$0.63} \\
+RelGNN (GloVe text) + label history & 0.716\,{\scriptsize$\pm$0.002} & 0.693\,{\scriptsize$\pm$0.042} & 0.843\,{\scriptsize$\pm$0.010} & 0.424\,{\scriptsize$\pm$0.194} & \textbf{0.427\,{\scriptsize$\pm$0.017}} & 0.585\,{\scriptsize$\pm$0.024} & 4.11\,{\scriptsize$\pm$0.17} \\
+\midrule
+\textit{RelBench ref.: LightGBM (trial table)} & -- & 0.726 & -- & 0.649 & -- & 0.602 & -- \\
+\textit{RelBench ref.: GNN (GloVe text)} & -- & 0.726 & -- & 0.680 & -- & 0.578 & -- \\

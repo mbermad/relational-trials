@@ -1,0 +1,32 @@
+{
+  "task": "driver-position",
+  "model": "lgbm_agg_nohist",
+  "seed": 2,
+  "task_type": "regression",
+  "val": {
+    "mae": 3.5137823831894535,
+    "nmae": 0.5001302969916217
+  },
+  "test": {
+    "mae": 3.9729749403120938,
+    "nmae": 0.5654889575247279
+  },
+  "train_seconds": 0.5873603820000426,
+  "infer_seconds_per_1k": 0.0034724631578491854,
+  "peak_gpu_mem_mb": null,
+  "params": {
+    "num_leaves": 219,
+    "learning_rate": 0.07297580969447268,
+    "min_child_samples": 21,
+    "feature_fraction": 0.7707306101245459,
+    "bagging_fraction": 0.6498559452686924,
+    "lambda_l2": 0.049062410832548906,
+    "best_iteration": 16,
+    "n_features": 20,
+    "n_trials": 20,
+    "feature_seconds": 0.5806229889999486
+  },
+  "notes": "",
+  "timestamp": "2026-11-27 23:38:35",
+  "host": "afecc7c41361"
+}
