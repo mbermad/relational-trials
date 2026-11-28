@@ -1,0 +1,30 @@
+{
+  "task": "user-engagement",
+  "model": "lgbm_agg",
+  "seed": 0,
+  "task_type": "binary_classification",
+  "val": {
+    "roc_auc": 0.9040644553597244
+  },
+  "test": {
+    "roc_auc": 0.9042472891624762
+  },
+  "train_seconds": 9.236107528999923,
+  "infer_seconds_per_1k": 0.0037926970852204768,
+  "peak_gpu_mem_mb": null,
+  "params": {
+    "num_leaves": 94,
+    "learning_rate": 0.016871651401894838,
+    "min_child_samples": 90,
+    "feature_fraction": 0.8115935723430212,
+    "bagging_fraction": 0.5420076717911924,
+    "lambda_l2": 2.1408024377043993,
+    "best_iteration": 295,
+    "n_features": 21,
+    "n_trials": 20,
+    "feature_seconds": 2.931083765999972
+  },
+  "notes": "",
+  "timestamp": "2026-11-28 00:57:49",
+  "host": "c50fe4b76fca"
+}

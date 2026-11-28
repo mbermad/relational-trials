@@ -1,0 +1,36 @@
+{
+  "tables": 7,
+  "rows": 4247264,
+  "columns": 50,
+  "val_timestamp": "2020-10-01 00:00:00",
+  "test_timestamp": "2021-01-01 00:00:00",
+  "labels": [
+    {
+      "task": "user-engagement",
+      "split": "train",
+      "rows": 317217,
+      "seed_times": 4,
+      "from": "2019-10-03",
+      "to": "2020-07-02",
+      "positive_rate": 0.0321
+    },
+    {
+      "task": "user-engagement",
+      "split": "val",
+      "rows": 85838,
+      "seed_times": 1,
+      "from": "2020-10-01",
+      "to": "2020-10-01",
+      "positive_rate": 0.0281
+    },
+    {
+      "task": "user-engagement",
+      "split": "test",
+      "rows": 88137,
+      "seed_times": 1,
+      "from": "2021-01-01",
+      "to": "2021-01-01",
+      "positive_rate": 0.0274
+    }
+  ]
+}

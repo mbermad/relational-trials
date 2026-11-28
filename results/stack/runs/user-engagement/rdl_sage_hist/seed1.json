@@ -1,0 +1,86 @@
+{
+  "task": "user-engagement",
+  "model": "rdl_sage_hist",
+  "seed": 1,
+  "task_type": "binary_classification",
+  "val": {
+    "roc_auc": 0.9000987369665596
+  },
+  "test": {
+    "roc_auc": 0.8919301870718619
+  },
+  "train_seconds": 625.7580465380001,
+  "infer_seconds_per_1k": 0.12836856374734873,
+  "peak_gpu_mem_mb": 1067.5673828125,
+  "params": {
+    "epochs": 30,
+    "lr": 0.005,
+    "batch_size": 512,
+    "channels": 128,
+    "num_layers": 2,
+    "num_neighbors": 128,
+    "aggr": "sum",
+    "arch": "sage",
+    "model_layers": 2,
+    "num_heads": 1,
+    "simplified_mp": false,
+    "subgraph_type": "directional",
+    "dropout": 0.0,
+    "weight_decay": 0.0,
+    "patience": 3,
+    "best_val": 0.9000996144539262,
+    "max_steps_per_epoch": 500,
+    "device": "cuda",
+    "label_history_features": 4,
+    "history": [
+      {
+        "epoch": 1,
+        "train_loss": 0.10348915729671716,
+        "val_roc_auc": 0.8969042678236215
+      },
+      {
+        "epoch": 2,
+        "train_loss": 0.09743118669092656,
+        "val_roc_auc": 0.899873595583334
+      },
+      {
+        "epoch": 3,
+        "train_loss": 0.09661070875823498,
+        "val_roc_auc": 0.8998249758229858
+      },
+      {
+        "epoch": 4,
+        "train_loss": 0.0954504615366459,
+        "val_roc_auc": 0.8997452313620229
+      },
+      {
+        "epoch": 5,
+        "train_loss": 0.09438661909103394,
+        "val_roc_auc": 0.9000057904222994
+      },
+      {
+        "epoch": 6,
+        "train_loss": 0.0940086499080062,
+        "val_roc_auc": 0.9000996144539262
+      },
+      {
+        "epoch": 7,
+        "train_loss": 0.09378956113010645,
+        "val_roc_auc": 0.8987711134957225
+      },
+      {
+        "epoch": 8,
+        "train_loss": 0.09219571286439895,
+        "val_roc_auc": 0.898124651400743
+      },
+      {
+        "epoch": 9,
+        "train_loss": 0.09152736035734416,
+        "val_roc_auc": 0.8975318502683199
+      }
+    ]
+  },
+  "notes": "",
+  "timestamp": "2026-11-28 01:49:04",
+  "host": "c50fe4b76fca"
+}

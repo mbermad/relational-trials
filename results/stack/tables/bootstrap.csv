@@ -1,0 +1,9 @@
+task,question,A,B,split,metric,seeds,diff,ci_low,ci_high,p_a_better
+user-engagement,label history,rdl_sage_hist,rdl_sage,val,roc_auc,3v3,0.0011172427674496221,-0.0005463752885849216,0.0027023665218194287,0.9065
+user-engagement,label history,rdl_sage_hist,rdl_sage,test,roc_auc,3v3,-0.009005078698049118,-0.011037272202724435,-0.006932245680846818,0.0
+user-engagement,label history,lgbm_agg,lgbm_agg_nohist,val,roc_auc,3v3,0.00019265363566267624,-0.0008044166515920103,0.0012044414005201417,0.636
+user-engagement,label history,lgbm_agg,lgbm_agg_nohist,test,roc_auc,3v3,0.00014692217603939906,-0.0007078090085852363,0.0010883837467206385,0.635
+user-engagement,LightGBM vs best GNN,lgbm_agg,rdl_sage_hist,val,roc_auc,3v3,0.0035133724127924815,0.0010854881579533237,0.005799700734821607,0.9985
+user-engagement,LightGBM vs best GNN,lgbm_agg,rdl_sage_hist,test,roc_auc,3v3,0.011555722667300872,0.009222512093879004,0.013925564471906626,1.0
+user-engagement,LightGBM (own row) vs GNN,lgbm_table,rdl_sage,val,roc_auc,3v3,-0.24723735283051596,-0.25862975428233326,-0.23468828258860558,0.0
+user-engagement,LightGBM (own row) vs GNN,lgbm_table,rdl_sage,test,roc_auc,3v3,-0.24815211415092486,-0.26031082740434985,-0.23608954904096557,0.0

@@ -1,0 +1,16 @@
+task,model,split,metric,mean,ci95,seeds
+user-engagement,lgbm_agg,val,roc_auc,0.9035550006123271,0.0010960212453236808,3
+user-engagement,lgbm_agg,test,roc_auc,0.9039067240422439,0.0007383742012493543,3
+user-engagement,lgbm_agg,-,train_seconds,7.909629180666646,4.867430777551383,3
+user-engagement,lgbm_agg_nohist,val,roc_auc,0.9033623469766644,0.0003812573509839531,3
+user-engagement,lgbm_agg_nohist,test,roc_auc,0.9037598018662045,0.0010213889009850548,3
+user-engagement,lgbm_agg_nohist,-,train_seconds,7.775871933,2.530018242046945,3
+user-engagement,lgbm_table,val,roc_auc,0.651687032601569,0.003498198044244104,3
+user-engagement,lgbm_table,test,roc_auc,0.6532039659220673,0.0010111877465548184,3
+user-engagement,lgbm_table,-,train_seconds,6.1243747719999915,3.3446037325544897,3
+user-engagement,rdl_sage,val,roc_auc,0.898924385432085,0.0016792987093805954,3
+user-engagement,rdl_sage,test,roc_auc,0.9013560800729922,0.0019546045178515403,3
+user-engagement,rdl_sage,-,train_seconds,414.6452876853334,174.31501254067763,3
+user-engagement,rdl_sage_hist,val,roc_auc,0.9000416281995346,0.0007452158559268707,3
+user-engagement,rdl_sage_hist,test,roc_auc,0.892351001374943,0.0021162836838546357,3
+user-engagement,rdl_sage_hist,-,train_seconds,533.5805124116665,198.31167927958413,3

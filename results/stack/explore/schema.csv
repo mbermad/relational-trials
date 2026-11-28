@@ -1,0 +1,8 @@
+table,rows,columns,primary_key,time_col,foreign_keys,time_range
+votes,1317876,5,Id,CreationDate,"PostId->posts, UserId->users",2009-02 to 2021-01
+postHistory,1175368,10,Id,CreationDate,"PostId->posts, UserId->users",2009-02 to 2020-12
+comments,623967,7,Id,CreationDate,"UserId->users, PostId->posts",2009-02 to 2020-12
+badges,463463,6,Id,Date,UserId->users,2010-07 to 2020-12
+posts,333893,10,Id,CreationDate,"OwnerUserId->users, ParentId->posts",2009-02 to 2020-12
+users,255360,7,Id,CreationDate,,2010-07 to 2020-12
+postLinks,77337,5,Id,CreationDate,"PostId->posts, RelatedPostId->posts",2010-07 to 2020-12

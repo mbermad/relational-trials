@@ -1,0 +1,4 @@
+task,split,rows,seed_times,from,to,positive_rate
+user-engagement,train,317217,4,2019-10-03,2020-07-02,0.0321
+user-engagement,val,85838,1,2020-10-01,2020-10-01,0.0281
+user-engagement,test,88137,1,2021-01-01,2021-01-01,0.0274
