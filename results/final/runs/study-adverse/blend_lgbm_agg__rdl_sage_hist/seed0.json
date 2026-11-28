@@ -1,0 +1,25 @@
+{
+  "task": "study-adverse",
+  "model": "blend_lgbm_agg__rdl_sage_hist",
+  "seed": 0,
+  "task_type": "regression",
+  "val": {
+    "mae": 35.84712648731346,
+    "nmae": 0.10570926890480425
+  },
+  "test": {
+    "mae": 35.259694725435935,
+    "nmae": 0.10397699666531217
+  },
+  "train_seconds": 433.8628754459992,
+  "infer_seconds_per_1k": null,
+  "peak_gpu_mem_mb": null,
+  "params": {
+    "weight_on_A": 1.0,
+    "A": "lgbm_agg",
+    "B": "rdl_sage_hist"
+  },
+  "notes": "weight picked on validation",
+  "timestamp": "2026-11-28 05:34:14",
+  "host": "b6f1b4a90aed"
+}

@@ -1,0 +1,87 @@
+{
+  "tables": 15,
+  "rows": 5434924,
+  "columns": 136,
+  "val_timestamp": "2020-01-01 00:00:00",
+  "test_timestamp": "2021-01-01 00:00:00",
+  "labels": [
+    {
+      "task": "study-outcome",
+      "split": "train",
+      "rows": 11994,
+      "seed_times": 19,
+      "from": "2001-01-05",
+      "to": "2019-01-01",
+      "positive_rate": 0.6376,
+      "mean": NaN,
+      "median": NaN,
+      "p95": NaN,
+      "share_zero": NaN
+    },
+    {
+      "task": "study-outcome",
+      "split": "val",
+      "rows": 960,
+      "seed_times": 1,
+      "from": "2020-01-01",
+      "to": "2020-01-01",
+      "positive_rate": 0.5844,
+      "mean": NaN,
+      "median": NaN,
+      "p95": NaN,
+      "share_zero": NaN
+    },
+    {
+      "task": "study-outcome",
+      "split": "test",
+      "rows": 825,
+      "seed_times": 1,
+      "from": "2021-01-01",
+      "to": "2021-01-01",
+      "positive_rate": 0.5855,
+      "mean": NaN,
+      "median": NaN,
+      "p95": NaN,
+      "share_zero": NaN
+    },
+    {
+      "task": "study-adverse",
+      "split": "train",
+      "rows": 43335,
+      "seed_times": 19,
+      "from": "2001-01-05",
+      "to": "2019-01-01",
+      "positive_rate": NaN,
+      "mean": 39.84,
+      "median": 2.0,
+      "p95": 120.0,
+      "share_zero": 0.4079
+    },
+    {
+      "task": "study-adverse",
+      "split": "val",
+      "rows": 3596,
+      "seed_times": 1,
+      "from": "2020-01-01",
+      "to": "2020-01-01",
+      "positive_rate": NaN,
+      "mean": 57.08,
+      "median": 2.0,
+      "p95": 189.25,
+      "share_zero": 0.3918
+    },
+    {
+      "task": "study-adverse",
+      "split": "test",
+      "rows": 3098,
+      "seed_times": 1,
+      "from": "2021-01-01",
+      "to": "2021-01-01",
+      "positive_rate": NaN,
+      "mean": 57.93,
+      "median": 3.0,
+      "p95": 244.74999999999818,
+      "share_zero": 0.3706
+    }
+  ]
+}

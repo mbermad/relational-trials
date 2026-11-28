@@ -1,45 +1,81 @@
 task,question,A,B,split,metric,seeds,diff,ci_low,ci_high,p_a_better
-study-outcome,label history,rdl_sage_hist,rdl_sage,val,roc_auc,3v3,0.03329774227607052,0.008959742535788346,0.05867592353889356,0.996
-study-outcome,label history,rdl_sage_hist,rdl_sage,test,roc_auc,3v3,0.0346114884635097,0.006563647913038187,0.0635540486773736,0.992
+study-outcome,label history,blend_lgbm_agg__rdl_sage_hist,blend_lgbm_agg__rdl_sage,val,roc_auc,3v3,0.0002248640019538728,-0.0018176251676926408,0.002297413306978326,0.597
+study-outcome,label history,blend_lgbm_agg__rdl_sage_hist,blend_lgbm_agg__rdl_sage,test,roc_auc,3v3,0.0017323905577146803,-0.0006991104694408806,0.004371585094068502,0.9205
+study-outcome,label history,rdl_sage_hist,rdl_sage,val,roc_auc,3v3,0.03175198840833504,0.009508960480543574,0.054931912342266326,0.997
+study-outcome,label history,rdl_sage_hist,rdl_sage,test,roc_auc,3v3,0.0371863636547084,0.012388053376527805,0.06379429052704215,0.998
 study-outcome,label history,rdl_sage_hist_tuned,rdl_sage_tuned,val,roc_auc,3v3,0.0292114719359301,0.002149331813664024,0.05673447578659698,0.982
 study-outcome,label history,rdl_sage_hist_tuned,rdl_sage_tuned,test,roc_auc,3v3,-0.0037462819690128324,-0.03292114051628224,0.026912024603612042,0.401
 study-outcome,label history,rdl_sage_notext_hist,rdl_sage_notext,val,roc_auc,3v3,0.04194979427177581,0.014349281141204429,0.0687667747853392,0.999
 study-outcome,label history,rdl_sage_notext_hist,rdl_sage_notext,test,roc_auc,3v3,0.06030777426658451,0.030906499118672257,0.0892408426224464,1.0
 study-outcome,label history,relgnn_hist,relgnn,val,roc_auc,3v3,0.02667840129140442,0.001294029298179611,0.05210882355497321,0.981
 study-outcome,label history,relgnn_hist,relgnn,test,roc_auc,3v3,0.029772498880050402,0.0016327282055316529,0.06003714978783063,0.982
-study-outcome,label history,lgbm_agg,lgbm_agg_nohist,val,roc_auc,3v3,0.0015472430333109966,-0.014523979209152429,0.017071362221769634,0.5805
-study-outcome,label history,lgbm_agg,lgbm_agg_nohist,test,roc_auc,3v3,0.01802715322928894,-0.00044006594096779853,0.037391456826333165,0.973
+study-outcome,label history,lgbm_agg,lgbm_agg_nohist,val,roc_auc,3v3,0.0007177778075609931,-0.01649198725499659,0.01691123228072701,0.5365
+study-outcome,label history,lgbm_agg,lgbm_agg_nohist,test,roc_auc,3v3,0.007368461411176863,-0.012758630674756933,0.0280535837972441,0.7695
 study-outcome,text,rdl_sage,rdl_sage_notext,val,roc_auc,3v3,0.005642448366906527,-0.020345662362911462,0.029991135265084817,0.6635
 study-outcome,text,rdl_sage,rdl_sage_notext,test,roc_auc,3v3,0.026826325071939272,-0.002251409516361169,0.05641639222083031,0.963
 study-outcome,tuning,rdl_sage_tuned,rdl_sage,val,roc_auc,3v3,0.0034131674998548744,-0.01489082046715282,0.020102884663953838,0.6625
 study-outcome,tuning,rdl_sage_tuned,rdl_sage,test,roc_auc,3v3,0.03485868455357399,0.01595432050950776,0.05436554406102283,1.0
 study-outcome,RelGNN vs GraphSAGE,relgnn,rdl_sage,val,roc_auc,3v3,-0.0022531075162653957,-0.023947422682788565,0.018644589946554904,0.417
 study-outcome,RelGNN vs GraphSAGE,relgnn,rdl_sage,test,roc_auc,3v3,-0.00489750947416856,-0.02830478203940588,0.01792937836514526,0.3265
-study-outcome,RelGNN vs GraphSAGE (with history),relgnn_hist,rdl_sage_hist,val,roc_auc,3v3,-0.008872448500931496,-0.02440011416495661,0.006558224999267843,0.1285
-study-outcome,RelGNN vs GraphSAGE (with history),relgnn_hist,rdl_sage_hist,test,roc_auc,3v3,-0.009736499057627857,-0.02667436382367129,0.005851727371348248,0.116
-study-outcome,LightGBM vs best GNN,lgbm_agg,rdl_sage_hist,val,roc_auc,3v3,0.02857783198340469,0.008050489310230243,0.048631421364971825,0.996
-study-outcome,LightGBM vs best GNN,lgbm_agg,rdl_sage_hist,test,roc_auc,3v3,0.03568502576893129,0.011864259125371215,0.05863802234498718,0.9975
+study-outcome,RelGNN vs GraphSAGE (with history),relgnn_hist,rdl_sage_hist,val,roc_auc,3v3,-0.007326694633196018,-0.021635381702588115,0.007713245454400281,0.172
+study-outcome,RelGNN vs GraphSAGE (with history),relgnn_hist,rdl_sage_hist,test,roc_auc,3v3,-0.012311374248826557,-0.027912665180024054,0.002771560112665445,0.0535
+study-outcome,LightGBM vs best GNN,lgbm_agg,rdl_sage_hist,val,roc_auc,3v3,0.029294120625390163,0.009470447911457907,0.04931816288432506,0.998
+study-outcome,LightGBM vs best GNN,lgbm_agg,rdl_sage_hist,test,roc_auc,3v3,0.022451458759620513,-0.0005190539514641905,0.04452877587717664,0.972
 study-outcome,LightGBM (own row) vs GNN,lgbm_table,rdl_sage,val,roc_auc,3v3,0.05044027180250099,0.02320065311976556,0.07649579929306091,1.0
 study-outcome,LightGBM (own row) vs GNN,lgbm_table,rdl_sage,test,roc_auc,3v3,0.05380601261608131,0.02429088481555474,0.08253391695456828,1.0
-study-adverse,label history,rdl_sage_hist,rdl_sage,val,nmae,3v3,-0.00014633021408896885,-0.0011603423528223273,0.0008794380555180733,0.3865
-study-adverse,label history,rdl_sage_hist,rdl_sage,test,nmae,3v3,-0.0008597421749087231,-0.0020325469312748178,0.0002772129990538552,0.0745
+study-outcome,blend vs single model,blend_lgbm_agg__rdl_sage,lgbm_agg,val,roc_auc,3v3,0.0005978999787048522,-0.001079818815833855,0.002368617952835479,0.757
+study-outcome,blend vs single model,blend_lgbm_agg__rdl_sage,lgbm_agg,test,roc_auc,3v3,0.0012289177048901978,-0.0005523071979492367,0.0029604115595359324,0.916
+study-outcome,blend vs single model,blend_lgbm_agg__rdl_sage,rdl_sage,val,roc_auc,3v3,0.06164400901243006,0.03648734065711096,0.08644348874951599,1.0
+study-outcome,blend vs single model,blend_lgbm_agg__rdl_sage,rdl_sage,test,roc_auc,3v3,0.06086674011921911,0.03490354411821288,0.0886860178156902,1.0
+study-outcome,blend vs single model,blend_lgbm_agg__rdl_sage_hist,lgbm_agg,val,roc_auc,3v3,0.000822763980658725,-0.0012591798811672494,0.002938078523503937,0.789
+study-outcome,blend vs single model,blend_lgbm_agg__rdl_sage_hist,lgbm_agg,test,roc_auc,3v3,0.002961308262604878,0.0005844522138253566,0.005406953856354947,0.993
+study-outcome,blend vs single model,blend_lgbm_agg__rdl_sage_hist,rdl_sage_hist,val,roc_auc,3v3,0.030116884606048888,0.012234502723135544,0.04839274286657874,0.9995
+study-outcome,blend vs single model,blend_lgbm_agg__rdl_sage_hist,rdl_sage_hist,test,roc_auc,3v3,0.02541276702222539,0.004657987139393777,0.04547496274105853,0.9915
+study-outcome,blend vs single model,blend_lgbm_agg_nohist__rdl_sage,lgbm_agg_nohist,val,roc_auc,3v3,0.0008741401930256743,-0.0007601605662203692,0.002535330082524484,0.848
+study-outcome,blend vs single model,blend_lgbm_agg_nohist__rdl_sage,lgbm_agg_nohist,test,roc_auc,3v3,0.0010402415055350556,-0.0007651717791410994,0.0028576121873568005,0.8635
+study-outcome,blend vs single model,blend_lgbm_agg_nohist__rdl_sage,rdl_sage,val,roc_auc,3v3,0.061202471419189886,0.03730239613951408,0.08440031348143032,1.0
+study-outcome,blend vs single model,blend_lgbm_agg_nohist__rdl_sage,rdl_sage,test,roc_auc,3v3,0.053309602508687104,0.026934852301550155,0.07899629743449081,1.0
+study-outcome,history used at inference,lgbm_agg,lgbm_agg_masked,val,roc_auc,3v3,0.03222554306145631,0.011796750896433747,0.05193734052351145,0.9995
+study-outcome,history used at inference,lgbm_agg,lgbm_agg_masked,test,roc_auc,3v3,0.023634973101029688,0.0029766952366844625,0.04700615159311778,0.986
+study-outcome,history used at inference,rdl_sage_hist,rdl_sage_hist_masked,val,roc_auc,3v3,0.05233821332892519,0.026690648080883693,0.07693003970234638,1.0
+study-outcome,history used at inference,rdl_sage_hist,rdl_sage_hist_masked,test,roc_auc,3v3,0.040570427679504695,0.011538329076100019,0.06953943602158782,0.997
+study-adverse,label history,blend_lgbm_agg__rdl_sage_hist,blend_lgbm_agg__rdl_sage,val,nmae,3v3,-0.0,-0.0,0.0,0.0
+study-adverse,label history,blend_lgbm_agg__rdl_sage_hist,blend_lgbm_agg__rdl_sage,test,nmae,3v3,-0.0,-0.0,0.0,0.0
+study-adverse,label history,rdl_sage_hist,rdl_sage,val,nmae,3v3,-6.288633728254722e-05,-0.0011114403962714312,0.0010231056238503334,0.4525
+study-adverse,label history,rdl_sage_hist,rdl_sage,test,nmae,3v3,-0.0005112931348299765,-0.0018292003771548046,0.0007327349359850326,0.2015
 study-adverse,label history,rdl_sage_hist_tuned,rdl_sage_tuned,val,nmae,3v3,6.891808961109747e-05,-0.0008916293673426001,0.0010027637854331873,0.561
 study-adverse,label history,rdl_sage_hist_tuned,rdl_sage_tuned,test,nmae,3v3,-0.0009132725572233713,-0.002021143890818801,0.00021394990139880093,0.06
 study-adverse,label history,rdl_sage_notext_hist,rdl_sage_notext,val,nmae,3v3,-5.214911525411314e-05,-0.0012959663760333411,0.001226588722243818,0.4805
 study-adverse,label history,rdl_sage_notext_hist,rdl_sage_notext,test,nmae,3v3,0.001930290330184159,0.0006154056388312055,0.003280700278453633,0.997
 study-adverse,label history,relgnn_hist,relgnn,val,nmae,3v3,0.0006048937827386747,-0.0006593124543590595,0.0019372332102301924,0.814
 study-adverse,label history,relgnn_hist,relgnn,test,nmae,3v3,0.0009521590035416472,-0.00040371834282231997,0.0023349260086382357,0.9125
-study-adverse,label history,lgbm_agg,lgbm_agg_nohist,val,nmae,3v3,0.0017140197486065767,-0.00013518661878959414,0.0036013661871446877,0.965
-study-adverse,label history,lgbm_agg,lgbm_agg_nohist,test,nmae,3v3,0.0027747326233621417,-0.00014756879049287628,0.005607113104225534,0.969
+study-adverse,label history,lgbm_agg,lgbm_agg_nohist,val,nmae,3v3,0.0010951101484709819,-0.0006925616763707659,0.0028776722409475947,0.8895
+study-adverse,label history,lgbm_agg,lgbm_agg_nohist,test,nmae,3v3,0.0021135709351189913,-0.0004543942798045406,0.004715768651441596,0.9505
 study-adverse,text,rdl_sage,rdl_sage_notext,val,nmae,3v3,0.005448408205826372,0.0032099448210501807,0.00771735192598792,1.0
 study-adverse,text,rdl_sage,rdl_sage_notext,test,nmae,3v3,0.008357973383361889,0.005467430486284349,0.011199822104393745,1.0
 study-adverse,tuning,rdl_sage_tuned,rdl_sage,val,nmae,3v3,-0.00018384864907536325,-0.0012611349902637563,0.0009474072789550142,0.376
 study-adverse,tuning,rdl_sage_tuned,rdl_sage,test,nmae,3v3,0.00013276381707183482,-0.0009741845878504012,0.0012060216505512958,0.5735
 study-adverse,RelGNN vs GraphSAGE,relgnn,rdl_sage,val,nmae,3v3,-0.003632292941239762,-0.005667767721707181,-0.001513637788097476,0.0
 study-adverse,RelGNN vs GraphSAGE,relgnn,rdl_sage,test,nmae,3v3,-0.005005976632104114,-0.007231231198484003,-0.002973816700030456,0.0
-study-adverse,RelGNN vs GraphSAGE (with history),relgnn_hist,rdl_sage_hist,val,nmae,3v3,-0.0028810689444121185,-0.004740020336631229,-0.0009483286916113135,0.001
-study-adverse,RelGNN vs GraphSAGE (with history),relgnn_hist,rdl_sage_hist,test,nmae,3v3,-0.003194075453653744,-0.0055493112211950175,-0.001106841385290099,0.002
-study-adverse,LightGBM vs best GNN,lgbm_agg,rdl_sage_hist,val,nmae,3v3,0.03038415219695198,0.020219781767485043,0.041713331057476905,1.0
-study-adverse,LightGBM vs best GNN,lgbm_agg,rdl_sage_hist,test,nmae,3v3,0.028707259703185176,0.017206976445226056,0.041516171376009554,1.0
+study-adverse,RelGNN vs GraphSAGE (with history),relgnn_hist,rdl_sage_hist,val,nmae,3v3,-0.00296451282121854,-0.0047753696384473625,-0.0010046893791829372,0.001
+study-adverse,RelGNN vs GraphSAGE (with history),relgnn_hist,rdl_sage_hist,test,nmae,3v3,-0.0035425244937324907,-0.005911933520233229,-0.0014344561544389384,0.0005
+study-adverse,LightGBM vs best GNN,lgbm_agg,rdl_sage_hist,val,nmae,3v3,0.029681798720009964,0.019365779545045658,0.041019221003906065,1.0
+study-adverse,LightGBM vs best GNN,lgbm_agg,rdl_sage_hist,test,nmae,3v3,0.02769764897486328,0.016309940643866774,0.04022226693531857,1.0
 study-adverse,LightGBM (own row) vs GNN,lgbm_table,rdl_sage,val,nmae,3v3,0.024422782675744395,0.015008985820921727,0.034799500409331136,1.0
 study-adverse,LightGBM (own row) vs GNN,lgbm_table,rdl_sage,test,nmae,3v3,0.023968802493743557,0.012755344452069335,0.03538482676252631,1.0
+study-adverse,blend vs single model,blend_lgbm_agg__rdl_sage,lgbm_agg,val,nmae,3v3,-0.0,-0.0,0.0,0.0
+study-adverse,blend vs single model,blend_lgbm_agg__rdl_sage,lgbm_agg,test,nmae,3v3,-0.0,-0.0,0.0,0.0
+study-adverse,blend vs single model,blend_lgbm_agg__rdl_sage,rdl_sage,val,nmae,3v3,0.029618912382727416,0.019426125917432514,0.04085943204224999,1.0
+study-adverse,blend vs single model,blend_lgbm_agg__rdl_sage,rdl_sage,test,nmae,3v3,0.027186355840033302,0.01619206975082282,0.03959084421545741,1.0
+study-adverse,blend vs single model,blend_lgbm_agg__rdl_sage_hist,lgbm_agg,val,nmae,3v3,-0.0,-0.0,0.0,0.0
+study-adverse,blend vs single model,blend_lgbm_agg__rdl_sage_hist,lgbm_agg,test,nmae,3v3,-0.0,-0.0,0.0,0.0
+study-adverse,blend vs single model,blend_lgbm_agg__rdl_sage_hist,rdl_sage_hist,val,nmae,3v3,0.029681798720009964,0.019365779545045658,0.041019221003906065,1.0
+study-adverse,blend vs single model,blend_lgbm_agg__rdl_sage_hist,rdl_sage_hist,test,nmae,3v3,0.02769764897486328,0.016309940643866774,0.04022226693531857,1.0
+study-adverse,blend vs single model,blend_lgbm_agg_nohist__rdl_sage,lgbm_agg_nohist,val,nmae,3v3,-0.0,-0.0,0.0,0.0
+study-adverse,blend vs single model,blend_lgbm_agg_nohist__rdl_sage,lgbm_agg_nohist,test,nmae,3v3,-0.0,-0.0,0.0,0.0
+study-adverse,blend vs single model,blend_lgbm_agg_nohist__rdl_sage,rdl_sage,val,nmae,3v3,0.028523802234256435,0.018284326946476734,0.03984822304430651,1.0
+study-adverse,blend vs single model,blend_lgbm_agg_nohist__rdl_sage,rdl_sage,test,nmae,3v3,0.02507278490491431,0.01410815351965272,0.03766740006466662,1.0
+study-adverse,history used at inference,lgbm_agg,lgbm_agg_masked,val,nmae,3v3,0.008505449878871696,0.0059777305030860395,0.011163911850596758,1.0
+study-adverse,history used at inference,lgbm_agg,lgbm_agg_masked,test,nmae,3v3,0.007509474718511308,0.004380732207319257,0.010593415753672899,1.0
+study-adverse,history used at inference,rdl_sage_hist,rdl_sage_hist_masked,val,nmae,3v3,0.00012794818169659106,-0.00040069690676426825,0.0006682174474591987,0.677
+study-adverse,history used at inference,rdl_sage_hist,rdl_sage_hist_masked,test,nmae,3v3,0.0009764429878800218,0.0005330577917518738,0.001526900172288502,1.0

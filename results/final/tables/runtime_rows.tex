@@ -1,11 +1,14 @@
 LightGBM (trial table) & 2 & 54 \\
 LightGBM + aggregates, no label history & 1 & 17 \\
-LightGBM + aggregates & 5 & 73 \\
+LightGBM + aggregates & 1 & 18 \\
 GNN, no text & 98 & 348 \\
 GNN, no text + label history & 102 & 362 \\
 GNN (GloVe text) & 123 & 430 \\
-GNN (GloVe text) + label history & 131 & 459 \\
+GNN (GloVe text) + label history & 118 & 399 \\
 GNN (GloVe text), tuned & 60 & 218 \\
 GNN (GloVe text) + label history, tuned & 55 & 234 \\
 RelGNN (GloVe text) & 174 & 1476 \\
 RelGNN (GloVe text) + label history & 176 & 1470 \\
+Blend: LightGBM + aggregates & GNN (GloVe text) & 132 & 465 \\
+Blend: LightGBM + aggregates & GNN (GloVe text) + label history & 127 & 434 \\
+Blend: LightGBM + aggregates, no label history & GNN (GloVe text) & 131 & 463 \\

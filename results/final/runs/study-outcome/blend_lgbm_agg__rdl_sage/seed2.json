@@ -1,0 +1,23 @@
+{
+  "task": "study-outcome",
+  "model": "blend_lgbm_agg__rdl_sage",
+  "seed": 2,
+  "task_type": "binary_classification",
+  "val": {
+    "roc_auc": 0.696869178293327
+  },
+  "test": {
+    "roc_auc": 0.7333551269478044
+  },
+  "train_seconds": 134.30490253400058,
+  "infer_seconds_per_1k": null,
+  "peak_gpu_mem_mb": null,
+  "params": {
+    "weight_on_A": 1.0,
+    "A": "lgbm_agg",
+    "B": "rdl_sage"
+  },
+  "notes": "weight picked on validation",
+  "timestamp": "2026-11-28 05:34:14",
+  "host": "b6f1b4a90aed"
+}

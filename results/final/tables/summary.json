@@ -10,7 +10,10 @@
     "rdl_sage_tuned",
     "rdl_sage_hist_tuned",
     "relgnn",
-    "relgnn_hist"
+    "relgnn_hist",
+    "blend_lgbm_agg__rdl_sage",
+    "blend_lgbm_agg__rdl_sage_hist",
+    "blend_lgbm_agg_nohist__rdl_sage"
   ],
-  "n_runs": 66
+  "n_runs": 84
 }

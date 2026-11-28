@@ -4,27 +4,27 @@
   "seed": 2,
   "task_type": "binary_classification",
   "val": {
-    "roc_auc": 0.7021810319023941
+    "roc_auc": 0.696869178293327
   },
   "test": {
-    "roc_auc": 0.7372840313343747
+    "roc_auc": 0.7333551269478044
   },
-  "train_seconds": 7.37975910199998,
-  "infer_seconds_per_1k": 0.03297907393930059,
+  "train_seconds": 1.4257174839999607,
+  "infer_seconds_per_1k": 0.015807900606225965,
   "peak_gpu_mem_mb": null,
   "params": {
-    "num_leaves": 81,
-    "learning_rate": 0.010063255520039822,
-    "min_child_samples": 83,
-    "feature_fraction": 0.9287021382937847,
-    "bagging_fraction": 0.5167927876527322,
-    "lambda_l2": 0.8291283895033416,
-    "best_iteration": 193,
+    "num_leaves": 94,
+    "learning_rate": 0.016871651401894838,
+    "min_child_samples": 90,
+    "feature_fraction": 0.8115935723430212,
+    "bagging_fraction": 0.5420076717911924,
+    "lambda_l2": 2.1408024377043993,
+    "best_iteration": 116,
     "n_features": 97,
     "n_trials": 20,
-    "feature_seconds": 11.546024517000092
+    "feature_seconds": 8.103973863000192
   },
   "notes": "",
-  "timestamp": "2026-11-07 15:25:17",
-  "host": "a3e4f485c5d0"
+  "timestamp": "2026-11-28 04:37:58",
+  "host": "b6f1b4a90aed"
 }

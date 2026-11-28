@@ -1,0 +1,16 @@
+table,rows,columns,primary_key,time_col,foreign_keys,time_range
+facilities_studies,1798765,4,id,date,"nct_id->studies, facility_id->facilities",2000-01 to 2021-01
+facilities,453233,6,facility_id,,,
+outcomes,411933,12,id,date,nct_id->studies,2000-05 to 2021-01
+conditions_studies,408422,4,id,date,"nct_id->studies, condition_id->conditions",2000-01 to 2021-01
+sponsors_studies,391462,5,id,date,"nct_id->studies, sponsor_id->sponsors",2000-01 to 2021-01
+reported_event_totals,383064,7,id,date,nct_id->studies,2000-05 to 2021-01
+drop_withdrawals,381199,6,id,date,nct_id->studies,2000-05 to 2021-01
+eligibilities,249730,15,id,date,nct_id->studies,2000-01 to 2021-01
+studies,249730,28,nct_id,start_date,,2000-01 to 2021-01
+designs,249093,15,id,date,nct_id->studies,2000-01 to 2021-01
+outcome_analyses,225846,23,id,date,"nct_id->studies, outcome_id->outcomes",2000-07 to 2021-01
+interventions_studies,171771,4,id,date,"nct_id->studies, intervention_id->interventions",2000-01 to 2021-01
+sponsors,53241,3,sponsor_id,,,
+conditions,3973,2,condition_id,,,
+interventions,3462,2,intervention_id,,,

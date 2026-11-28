@@ -1,14 +1,17 @@
 LightGBM (trial table) & 0.689\,{\scriptsize$\pm$0.013} & 0.718\,{\scriptsize$\pm$0.035} & 0.112\,{\scriptsize$\pm$0.001} & 0.106\,{\scriptsize$\pm$0.002} & 36.05\,{\scriptsize$\pm$0.75} \\
 LightGBM + aggregates, no label history & 0.699\,{\scriptsize$\pm$0.012} & 0.716\,{\scriptsize$\pm$0.010} & 0.108\,{\scriptsize$\pm$0.001} & 0.105\,{\scriptsize$\pm$0.002} & 35.68\,{\scriptsize$\pm$0.77} \\
-LightGBM + aggregates & \textbf{0.701\,{\scriptsize$\pm$0.008}} & \textbf{0.734\,{\scriptsize$\pm$0.015}} & \textbf{0.106\,{\scriptsize$\pm$0.001}} & \textbf{0.102\,{\scriptsize$\pm$0.002}} & \textbf{34.74\,{\scriptsize$\pm$0.69}} \\
+LightGBM + aggregates & 0.700\,{\scriptsize$\pm$0.007} & 0.723\,{\scriptsize$\pm$0.041} & 0.107\,{\scriptsize$\pm$0.002} & 0.103\,{\scriptsize$\pm$0.004} & 34.96\,{\scriptsize$\pm$1.48} \\
 GNN, no text & 0.633\,{\scriptsize$\pm$0.001} & 0.637\,{\scriptsize$\pm$0.010} & 0.142\,{\scriptsize$\pm$0.002} & 0.139\,{\scriptsize$\pm$0.001} & 47.01\,{\scriptsize$\pm$0.42} \\
 GNN, no text + label history & 0.675\,{\scriptsize$\pm$0.011} & 0.697\,{\scriptsize$\pm$0.012} & 0.142\,{\scriptsize$\pm$0.000} & 0.137\,{\scriptsize$\pm$0.002} & 46.36\,{\scriptsize$\pm$0.81} \\
 GNN (GloVe text) & 0.639\,{\scriptsize$\pm$0.007} & 0.664\,{\scriptsize$\pm$0.036} & 0.136\,{\scriptsize$\pm$0.001} & 0.130\,{\scriptsize$\pm$0.002} & 44.18\,{\scriptsize$\pm$0.80} \\
-GNN (GloVe text) + label history & 0.672\,{\scriptsize$\pm$0.007} & 0.698\,{\scriptsize$\pm$0.021} & 0.137\,{\scriptsize$\pm$0.002} & 0.131\,{\scriptsize$\pm$0.001} & 44.47\,{\scriptsize$\pm$0.49} \\
+GNN (GloVe text) + label history & 0.671\,{\scriptsize$\pm$0.004} & 0.701\,{\scriptsize$\pm$0.017} & 0.136\,{\scriptsize$\pm$0.002} & 0.131\,{\scriptsize$\pm$0.002} & 44.35\,{\scriptsize$\pm$0.77} \\
 GNN (GloVe text), tuned & 0.642\,{\scriptsize$\pm$0.017} & 0.699\,{\scriptsize$\pm$0.032} & 0.137\,{\scriptsize$\pm$0.003} & 0.130\,{\scriptsize$\pm$0.002} & 44.13\,{\scriptsize$\pm$0.60} \\
 GNN (GloVe text) + label history, tuned & 0.671\,{\scriptsize$\pm$0.031} & 0.695\,{\scriptsize$\pm$0.064} & 0.136\,{\scriptsize$\pm$0.001} & 0.131\,{\scriptsize$\pm$0.003} & 44.44\,{\scriptsize$\pm$0.86} \\
 RelGNN (GloVe text) & 0.637\,{\scriptsize$\pm$0.015} & 0.659\,{\scriptsize$\pm$0.039} & 0.140\,{\scriptsize$\pm$0.006} & 0.135\,{\scriptsize$\pm$0.003} & 45.88\,{\scriptsize$\pm$1.17} \\
 RelGNN (GloVe text) + label history & 0.663\,{\scriptsize$\pm$0.012} & 0.689\,{\scriptsize$\pm$0.060} & 0.139\,{\scriptsize$\pm$0.002} & 0.134\,{\scriptsize$\pm$0.002} & 45.55\,{\scriptsize$\pm$0.54} \\
+Blend: LightGBM + aggregates \& GNN (GloVe text) & 0.700\,{\scriptsize$\pm$0.008} & 0.725\,{\scriptsize$\pm$0.036} & \textbf{0.107\,{\scriptsize$\pm$0.002}} & \textbf{0.103\,{\scriptsize$\pm$0.004}} & \textbf{34.96\,{\scriptsize$\pm$1.48}} \\
+Blend: LightGBM + aggregates \& GNN (GloVe text) + label history & \textbf{0.701\,{\scriptsize$\pm$0.007}} & \textbf{0.726\,{\scriptsize$\pm$0.031}} & 0.107\,{\scriptsize$\pm$0.002} & 0.103\,{\scriptsize$\pm$0.004} & 34.96\,{\scriptsize$\pm$1.48} \\
+Blend: LightGBM + aggregates, no label history \& GNN (GloVe text) & 0.700\,{\scriptsize$\pm$0.010} & 0.717\,{\scriptsize$\pm$0.008} & 0.108\,{\scriptsize$\pm$0.001} & 0.105\,{\scriptsize$\pm$0.002} & 35.68\,{\scriptsize$\pm$0.77} \\
 \midrule
 \textit{RelBench ref.: LightGBM (trial table)} & -- & 0.689 & -- & 0.129 & -- \\
 \textit{RelBench ref.: GNN (GloVe text)} & -- & 0.669 & -- & 0.129 & -- \\
