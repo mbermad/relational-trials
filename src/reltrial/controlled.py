@@ -36,7 +36,7 @@ def name(mode: str, strength: float) -> str:
     return f"controlled-{mode}-s{strength:g}"
 
 
-def build(root: str | Path, mode: str, strength: float, n_trials: int = 20000,
+def build(root: str | Path, mode: str, strength: float, n_trials: int = 30000,
           n_sponsors: int = 300, seed: int = 0) -> Path:
     """Write one dataset (db parquet files + one task, study-outcome) under ``root``."""
     if mode not in MODES:
@@ -112,7 +112,9 @@ def build(root: str | Path, mode: str, strength: float, n_trials: int = 20000,
 
     comp, st = pd.to_datetime(completion), pd.to_datetime(start)
     rows = []
-    for t in pd.date_range("2007-01-01", "2019-01-01", freq="YS"):
+    # Seeds end AT the test date (one test question date, as in rel-trial): RelBench's db
+    # drops rows after the test timestamp, so a later seed would point at missing trials.
+    for t in pd.date_range("2007-01-01", TEST, freq="YS"):
         m = (comp > t) & (comp <= t + pd.Timedelta(days=365)) & (st <= t)
         rows += [{"timestamp": t, "nct_id": int(i), "outcome": int(success[i])} for i in np.flatnonzero(m)]
     df = pd.DataFrame(rows)

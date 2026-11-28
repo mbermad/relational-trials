@@ -221,3 +221,14 @@ def test_controlled_regimes_differ_only_in_the_quality_column(tmp_path):
         pd.testing.assert_frame_equal(a, c)  # identical labels: only visibility changes
     z = controlled.build(tmp_path / "z", "hidden", 0.0, n_trials=800, n_sponsors=40)
     assert len(pd.read_parquet(z / "tasks" / "study-outcome" / "train.parquet")) > 0
+
+
+def test_controlled_labels_only_reference_trials_in_the_db(tmp_path):
+    """Regression: test seeds after the test timestamp pointed at trials RelBench drops."""
+    from reltrial import controlled, data
+
+    b = data.load_bundle("study-outcome", str(controlled.build(tmp_path / "c", "hidden", 1.0,
+                                                                n_trials=1500, n_sponsors=40)))
+    n = len(b.dataset.get_db().table_dict["studies"].df)
+    for s in ("train", "val", "test"):
+        assert (b.split(s).df["nct_id"] < n).all(), s

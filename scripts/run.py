@@ -43,6 +43,8 @@ def parse() -> argparse.Namespace:
     p.add_argument("--epochs", type=int, default=30)
     p.add_argument("--history", action="store_true",
                    help="give the GNN the time-safe label history of linked entities")
+    p.add_argument("--history_as_of", default="seed", choices=["seed", "start"],
+                   help="compute --history as of the seed time (default) or the trial's start")
     p.add_argument("--graph_history", action="store_true",
                    help="write time-safe label history onto junction rows (history in the graph)")
     p.add_argument("--lr", type=float, default=0.005)
@@ -102,10 +104,12 @@ def main() -> None:
                 print(f"[{t}] building graph (text={a.text}) ...")
                 data, stats = rdl.build_graph(b, cache_dir=f"{a.cache_dir}/{Path(a.dataset).name}",
                                               text=a.text, graph_history=a.graph_history)
-                hist = rdl.history_features(b) if a.history else None
+                hist = rdl.history_features(b, as_of=a.history_as_of) if a.history else None
                 prefix = "relgnn" if a.arch == "relgnn" else "rdl_sage"
                 name = prefix + ("_notext" if a.text == "none" else "") + \
-                    ("_hist" if a.history else "") + ("_ghist" if a.graph_history else "") + ("_tuned" if a.tune else "") + \
+                    ("_hist" if a.history else "") + \
+                    ("_atstart" if a.history and a.history_as_of == "start" else "") + \
+                    ("_ghist" if a.graph_history else "") + ("_tuned" if a.tune else "") + \
                     (f"_L{a.num_layers}" if a.num_layers != 2 and a.arch == "sage" else "") + \
                     (f"_e{a.epochs}" if a.epochs != 30 else "")
                 # Settings: our defaults; RelGNN's official per-task config for --arch relgnn.

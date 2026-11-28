@@ -299,7 +299,7 @@ def tune(bundle: TaskBundle, data: HeteroData, col_stats_dict, n_trials: int = 1
     return best
 
 
-def history_features(bundle: TaskBundle) -> Dict[str, np.ndarray]:
+def history_features(bundle: TaskBundle, as_of: str = "seed") -> Dict[str, np.ndarray]:
     """Time-safe label history of each seed row's linked entities, as a dense matrix.
 
     Reuses the tested LightGBM feature code (``features.FeatureBuilder``): for every linked
@@ -310,7 +310,7 @@ def history_features(bundle: TaskBundle) -> Dict[str, np.ndarray]:
     """
     from .lgbm import build_features
 
-    X, _ = build_features(bundle, "agg")
+    X, _ = build_features(bundle, "agg", as_of=as_of)
     cols = [c for c in X["train"].columns if "_hist_" in c]
     if not cols:
         raise ValueError("no label-history features found for this task")

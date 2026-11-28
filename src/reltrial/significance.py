@@ -76,6 +76,12 @@ def default_pairs(models: Sequence[str]) -> List[Tuple[str, str, str]]:
                 pairs.append((m, base, "history in the graph"))
             if base + "_hist" in have:
                 pairs.append((m, base + "_hist", "history in the graph vs at the head"))
+        if m.endswith("_hist_atstart"):
+            base = m[: -len("_hist_atstart")]
+            for other, q in ((base + "_hist", "history at seed time vs at trial start"),
+                             (base + "_ghist", "history at the head vs in the graph, same date")):
+                if other in have:
+                    pairs.append((other, m, q) if other.endswith("_hist") else (m, other, q))
         if m + "_masked" in have:
             pairs.append((m, m + "_masked", "history used at inference"))
         if m.startswith("blend_") and "__" in m:

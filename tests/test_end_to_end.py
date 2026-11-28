@@ -212,3 +212,13 @@ def test_rdl_graph_history_smoke(bundles, tmp_path, monkeypatch):
     recs = rdl.run(b, graph, stats, seeds=[0], epochs=2, channels=32, num_neighbors=16,
                    batch_size=128, out_dir="runs", save_preds=None, model_name="rdl_sage_ghist")
     assert 0.0 <= recs[0].test["roc_auc"] <= 1.0
+
+
+def test_history_as_of_start_only_sees_labels_known_at_trial_start(bundles):
+    """Control for B: as-of-start history counts fewer (never more) past outcomes."""
+    b = bundles["study-outcome"]
+    Xs, _ = lgbm.build_features(b, "agg")
+    Xt, _ = lgbm.build_features(b, "agg", as_of="start")
+    n_seed = Xs["test"]["sponsor_hist_n_sum"].to_numpy()
+    n_start = Xt["test"]["sponsor_hist_n_sum"].to_numpy()
+    assert (n_start <= n_seed + 1e-9).all() and (n_start < n_seed).any()

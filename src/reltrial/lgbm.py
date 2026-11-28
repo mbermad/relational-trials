@@ -36,9 +36,14 @@ def sample_params(rng: np.random.Generator) -> Dict:
     return p
 
 
-def build_features(bundle: TaskBundle, feature_set: str):
+def build_features(bundle: TaskBundle, feature_set: str, as_of: str = "seed"):
     """Feature sets: 'table' (trial row only), 'agg' (+ relational aggregates and label
-    history), 'agg_nohist' ('agg' without any label-history feature: the ablation)."""
+    history), 'agg_nohist' ('agg' without any label-history feature: the ablation).
+
+    ``as_of='start'`` computes every feature as of the entity's own start date instead of the
+    seed time (a control for B: the history written into the graph is as of each link's
+    date, i.e. the trial's start, so it knows fewer outcomes than seed-time history).
+    """
     task = bundle.task
     history = None
     if feature_set == "agg":
@@ -51,8 +56,19 @@ def build_features(bundle: TaskBundle, feature_set: str):
                         # Activity counts are new with rel-stack; rel-trial / rel-f1 keep
                         # the exact features their published numbers were made with.
                         activity=bundle.base_name not in ("rel-trial", "rel-f1"))
-    fb.fit(bundle.train.df)
-    X = {s: _clean_names(fb.transform(bundle.split(s).df)) for s in ("train", "val", "test")}
+    frames = {s: bundle.split(s).df for s in ("train", "val", "test")}
+    if as_of == "start":
+        ent = bundle.db.table_dict[task.entity_table]
+        if ent.time_col is None:
+            raise ValueError(f"{task.entity_table} has no time column: as_of='start' needs one")
+        start = ent.df.set_index(ent.pkey_col)[ent.time_col]
+        frames = {s: df.assign(**{task.time_col: np.minimum(
+            pd.to_datetime(df[task.entity_col].map(start)).fillna(df[task.time_col]).to_numpy(),
+            pd.to_datetime(df[task.time_col]).to_numpy())}) for s, df in frames.items()}
+    elif as_of != "seed":
+        raise ValueError("as_of must be 'seed' or 'start'")
+    fb.fit(frames["train"])
+    X = {s: _clean_names(fb.transform(df)) for s, df in frames.items()}
     y = {s: bundle.split(s).df[task.target_col].to_numpy(dtype=float) for s in X}
     return X, y
 
