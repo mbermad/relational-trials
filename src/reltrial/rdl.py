@@ -436,7 +436,6 @@ def run(bundle: TaskBundle, data: HeteroData, col_stats_dict, seeds: List[int] =
     return records
 
 
-@torch.no_grad()
 def _mask_eval(model, loaders, hist, predict, bundle, y, rec, root: Path, save_preds) -> None:
     """Deletion test: zero the standardized history columns (= training mean) at inference."""
     from . import masking
@@ -460,6 +459,7 @@ def _mask_eval(model, loaders, hist, predict, bundle, y, rec, root: Path, save_p
                  unmasked={"val": rec.val, "test": rec.test})
 
 
+@torch.no_grad()
 def export_embeddings(model: RDLModel, loaders, entity_table: str, device, out: Path) -> None:
     """Batch job for C3: save each split's trial embeddings (in label-table row order)."""
     out.mkdir(parents=True, exist_ok=True)
