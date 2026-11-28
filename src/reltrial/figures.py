@@ -34,12 +34,14 @@ def family(model: str) -> str:
     return "RelGNN" if model.startswith("relgnn") else "GNN"
 
 
-SHORT = {"lgbm_table": "LightGBM, own row", "lgbm_agg": "LightGBM + aggregates + history",
-         "lgbm_agg_nohist": "LightGBM + aggregates"}
+SHORT = {"lgbm_table": "LightGBM, own row", "lgbm_agg": "LightGBM + agg. + history",
+         "lgbm_agg_nohist": "LightGBM + agg.", "rdl_sage": "GNN", "rdl_sage_hist": "GNN + history"}
 
 
 def short(model: str) -> str:
-    return SHORT.get(model) or label(model).replace(" (GloVe text)", "")
+    if model.startswith("blend_"):
+        return "Blend: LightGBM + GNN"  # fill shows whether history is in it
+    return SHORT.get(model) or label(model).replace(" (GloVe text)", "").replace("label history", "history")
 
 
 def has_history(model: str) -> bool:
@@ -102,8 +104,10 @@ def pareto(runs_dir: str, out: str, tasks: Optional[List[str]] = None, split: st
         for i, (_, r) in enumerate(f.iterrows()):
             up = i % 2 == 0
             ax.annotate(short(r["model"]), (r["cost"], r["mean"]),
-                        xytext=(7, 9 if up else -13), textcoords="offset points",
-                        fontsize=7, color=INK2)
+                        xytext=(14, 16 if up else -20), textcoords="offset points",
+                        fontsize=7, color=INK2, va="center",
+                        arrowprops=dict(arrowstyle="-", color="#9c9c9c", lw=0.7,
+                                        shrinkA=1, shrinkB=5))
         ax.set_xscale("log")
         ax.set_xlabel("Training cost per seed (seconds, log scale)", color=INK2, fontsize=8)
         name = "AUROC (higher is better)" if higher else "NMAE (lower is better)"
