@@ -114,7 +114,7 @@ def tune(bundle: TaskBundle, X, y, n_trials: int, seed: int = 0) -> Dict:
 
 def run(bundle: TaskBundle, feature_set: str = "table", seeds: List[int] = (0, 1, 2),
         n_trials: int = 20, out_dir: str = "results/runs",
-        save_preds: Optional[str] = "results/preds") -> List[RunRecord]:
+        save_preds: Optional[str] = "results/preds", mask_eval: bool = False) -> List[RunRecord]:
     model_name = f"lgbm_{feature_set}"
     task_type = bundle.task.task_type.value
     print(f"[{bundle.task_name}] building '{feature_set}' features ...")
@@ -140,9 +140,33 @@ def run(bundle: TaskBundle, feature_set: str = "table", seeds: List[int] = (0, 1
         if save_preds:
             _save_preds(save_preds, rec, preds)
         _save_importance(booster, bundle.task_name, model_name, seed, Path(out_dir).parent / "importance")
+        if mask_eval:
+            _mask_eval(bundle, booster, X, y, rec, Path(out_dir).parent, save_preds)
         print(f"  seed {seed}: val {rec.val}  test {rec.test}")
         records.append(rec)
     return records
+
+
+def _mask_eval(bundle: TaskBundle, booster, X, y, rec: RunRecord, root: Path, save_preds) -> None:
+    """Deletion test: history columns -> their training mean, model unchanged."""
+    from . import masking
+
+    cols = list(X["train"].columns)
+    groups = masking.history_groups(cols)
+    if not groups["all"]:
+        return
+    means = X["train"].iloc[:, groups["all"]].astype(float).mean()
+
+    def predict(split, idx):
+        Xm = X[split].copy()
+        for i in idx:
+            Xm[cols[i]] = means[cols[i]]
+        p = booster.predict(Xm, num_iteration=booster.best_iteration)
+        return np.clip(p, 0, None) if bundle.is_regression else p
+
+    res = masking.evaluate_masked(predict, groups, y, bundle.task.task_type.value, bundle.nmae_std())
+    masking.save(res, root / "masking", bundle.task_name, rec.model, rec.seed, save_preds,
+                 unmasked={"val": rec.val, "test": rec.test})
 
 
 def _save_preds(root: str, rec: RunRecord, preds: Dict[str, np.ndarray]) -> None:

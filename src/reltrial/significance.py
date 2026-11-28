@@ -69,6 +69,12 @@ def default_pairs(models: Sequence[str]) -> List[Tuple[str, str, str]]:
              ("lgbm_agg", "rdl_sage_hist", "LightGBM vs best GNN"),
              ("lgbm_table", "rdl_sage", "LightGBM (own row) vs GNN")]
     pairs += [p for p in extra if p[0] in have and p[1] in have]
+    for m in sorted(have):
+        if m + "_masked" in have:
+            pairs.append((m, m + "_masked", "history used at inference"))
+        if m.startswith("blend_") and "__" in m:
+            a, b = m[len("blend_"):].split("__", 1)
+            pairs += [(m, x, "blend vs single model") for x in (a, b) if x in have]
     return pairs
 
 

@@ -35,6 +35,11 @@ def label(model: str) -> str:
     """Readable name for any run name, including combinations not listed above."""
     if model in MODEL_LABELS:
         return MODEL_LABELS[model]
+    if model.startswith("blend_") and "__" in model:
+        a, b = model[len("blend_"):].split("__", 1)
+        return f"Blend: {label(a)} & {label(b)}"
+    if model.endswith("_masked"):
+        return label(model[:-len("_masked")]) + ", history masked at inference"
     parts = model.split("_")
     base = {"rdl": "GNN", "relgnn": "RelGNN", "lgbm": "LightGBM"}.get(parts[0], parts[0])
     extra = []

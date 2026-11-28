@@ -321,7 +321,8 @@ def run(bundle: TaskBundle, data: HeteroData, col_stats_dict, seeds: List[int] =
         hist: Optional[Dict[str, np.ndarray]] = None, arch: str = "sage",
         model_layers: Optional[int] = None, num_heads: int = 1, simplified_mp: bool = False,
         subgraph_type: str = "directional", dropout: float = 0.0, weight_decay: float = 0.0,
-        patience: Optional[int] = None, save: bool = True) -> List[RunRecord]:
+        patience: Optional[int] = None, save: bool = True,
+        mask_eval: bool = False) -> List[RunRecord]:
     """Train ``len(seeds)`` models and log each. ``num_layers`` is the number of sampled hops;
     ``model_layers`` (default: the same) is the number of message-passing layers."""
     model_layers = model_layers or num_layers
@@ -424,6 +425,9 @@ def run(bundle: TaskBundle, data: HeteroData, col_stats_dict, seeds: List[int] =
             d.mkdir(parents=True, exist_ok=True)
             for s, p in preds.items():
                 np.save(d / f"seed{seed}_{s}.npy", p)
+        if save and mask_eval and hist is not None:
+            _mask_eval(model, loaders, hist, predict, bundle, y, rec, Path(out_dir).parent,
+                       save_preds)
         if save and save_embeddings and seed == seeds[0]:
             export_embeddings(model, loaders, entity_table, device,
                               Path(save_embeddings) / bundle.task_name / model_name)
@@ -433,6 +437,29 @@ def run(bundle: TaskBundle, data: HeteroData, col_stats_dict, seeds: List[int] =
 
 
 @torch.no_grad()
+def _mask_eval(model, loaders, hist, predict, bundle, y, rec, root: Path, save_preds) -> None:
+    """Deletion test: zero the standardized history columns (= training mean) at inference."""
+    from . import masking
+
+    groups = masking.history_groups([str(c) for c in hist["columns"]])
+
+    def run_masked(split, idx):
+        tr = loaders[split].transform
+        original = tr.hist
+        masked = original.clone()
+        masked[:, idx] = 0.0
+        tr.hist = masked
+        try:
+            return predict(model, loaders[split])
+        finally:
+            tr.hist = original
+
+    res = masking.evaluate_masked(run_masked, groups, y, bundle.task.task_type.value,
+                                  bundle.nmae_std())
+    masking.save(res, root / "masking", bundle.task_name, rec.model, rec.seed, save_preds,
+                 unmasked={"val": rec.val, "test": rec.test})
+
+
 def export_embeddings(model: RDLModel, loaders, entity_table: str, device, out: Path) -> None:
     """Batch job for C3: save each split's trial embeddings (in label-table row order)."""
     out.mkdir(parents=True, exist_ok=True)

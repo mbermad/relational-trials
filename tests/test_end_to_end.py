@@ -95,10 +95,15 @@ def test_rdl_with_label_history_smoke(bundles, tmp_path, monkeypatch):
     assert hist["test"].shape[0] == len(b.test.df)
     graph, stats = rdl.build_graph(b, cache_dir=str(tmp_path / "cache"), text="hash")
     recs = rdl.run(b, graph, stats, seeds=[0], epochs=2, channels=32, num_neighbors=16,
-                   batch_size=128, out_dir="runs", save_preds=None, hist=hist,
-                   model_name="rdl_sage_hist")
+                   batch_size=128, out_dir="res/runs", save_preds="res/preds", hist=hist,
+                   model_name="rdl_sage_hist", mask_eval=True)
     assert recs[0].params["label_history_features"] == hist["train"].shape[1]
     assert 0.0 <= recs[0].test["roc_auc"] <= 1.0
+    import json
+
+    r = json.loads((tmp_path / "res/masking/study-outcome/rdl_sage_hist/seed0.json").read_text())
+    assert {"none", "all", "sponsor"} <= set(r)
+    assert (tmp_path / "res/preds/study-outcome/rdl_sage_hist_masked/seed0_test.npy").exists()
 
 
 def test_relgnn_atomic_routes_skip_junction_tables():
@@ -164,3 +169,29 @@ def test_max_train_subsamples_fitting_rows_but_keeps_history(tmp_path_factory):
     # The latest training rows see the same history either way.
     tail = Xf["train"].iloc[-len(Xs["train"]):]["own_hist_n_sum"].to_numpy()
     assert (Xs["train"]["own_hist_n_sum"].to_numpy() == tail).all()
+
+
+def test_mask_eval_blend_and_figure(tmp_path_factory, tmp_path, monkeypatch):
+    """F: masking history at inference hurts a model that uses it; blending and the
+    accuracy-vs-cost figure run end to end and feed the bootstrap."""
+    import json
+
+    from reltrial import ensemble, figures, masking, significance
+
+    monkeypatch.chdir(tmp_path)
+    root = synthetic.build_f1(tmp_path_factory.mktemp("f1mask") / "rel-f1-synthetic")
+    b = data.load_bundle("driver-dnf", str(root))
+    lgbm.run(b, "agg", seeds=[0, 1], n_trials=2, out_dir="res/runs", save_preds="res/preds",
+             mask_eval=True)
+    lgbm.run(b, "agg_nohist", seeds=[0, 1], n_trials=2, out_dir="res/runs", save_preds="res/preds")
+    r = json.loads((tmp_path / "res/masking/driver-dnf/lgbm_agg/seed0.json").read_text())
+    assert {"none", "all", "own"} <= set(r)
+    assert r["all"]["test"]["roc_auc"] < r["none"]["test"]["roc_auc"] - 0.02
+    assert "| own |" in masking.summarize("res/masking", "res/tables")
+
+    recs = ensemble.run({"driver-dnf": b}, "res", pairs=[("lgbm_agg", "lgbm_agg_nohist")])
+    assert len(recs) == 2 and 0.0 <= recs[0].params["weight_on_A"] <= 1.0
+    df = significance.run({"driver-dnf": b}, "res/preds", "res/tables", n_boot=50)
+    assert {"history used at inference", "blend vs single model"} <= set(df["question"])
+    out = figures.pareto("res/runs", "res/figures/pareto.png")
+    assert (tmp_path / "res/figures/pareto.png").exists() and "driver-dnf" in out

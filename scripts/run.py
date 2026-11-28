@@ -26,7 +26,8 @@ from reltrial import data as D  # noqa: E402
 
 def parse() -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("command", choices=["explore", "lgbm", "rdl", "tables", "bootstrap", "all"])
+    p.add_argument("command", choices=["explore", "lgbm", "rdl", "tables", "bootstrap", "ensemble",
+                                          "figures", "all"])
     p.add_argument("--dataset", default=D.DEFAULT_DATASET)
     p.add_argument("--tasks", nargs="+", default=list(D.TASKS))
     p.add_argument("--seeds", nargs="+", type=int, default=[0, 1, 2])
@@ -56,6 +57,8 @@ def parse() -> argparse.Namespace:
     p.add_argument("--tune", type=int, default=0,
                    help="random-search trials on validation before training (0 = off)")
     p.add_argument("--cache_dir", default=os.path.expanduser("~/.cache/reltrial"))
+    p.add_argument("--mask_eval", action="store_true",
+                   help="deletion test: also score with label history masked at inference")
     p.add_argument("--save_embeddings", action="store_true",
                    help="export trial embeddings for C3 (first seed only)")
     return p.parse_args()
@@ -88,7 +91,7 @@ def main() -> None:
             for t in a.tasks:
                 for fs in a.features:
                     lgbm.run(bundle(t), feature_set=fs, seeds=a.seeds, n_trials=a.n_trials,
-                             out_dir=runs, save_preds=preds)
+                             out_dir=runs, save_preds=preds, mask_eval=a.mask_eval)
         elif cmd == "rdl":
             from reltrial import rdl
 
@@ -119,7 +122,7 @@ def main() -> None:
                     kw["patience"] = fixed["patience"]
                 print(f"[{t}] training {name} with {kw}")
                 rdl.run(b, data, stats, seeds=a.seeds, hist=hist, out_dir=runs, save_preds=preds,
-                        model_name=name,
+                        model_name=name, mask_eval=a.mask_eval,
                         save_embeddings=f"{a.results}/embeddings" if a.save_embeddings else None,
                         **kw)
         elif cmd == "bootstrap":
@@ -127,10 +130,21 @@ def main() -> None:
 
             significance.run({t: bundle(t) for t in a.tasks}, preds_root=preds,
                              out_dir=f"{a.results}/tables")
+        elif cmd == "ensemble":
+            from reltrial import ensemble
+
+            ensemble.run({t: bundle(t) for t in a.tasks}, results=a.results)
+        elif cmd == "figures":
+            from reltrial import figures
+
+            figures.pareto(runs, f"{a.results}/figures/pareto.png")
         elif cmd == "tables":
-            from reltrial import tables
+            from reltrial import masking, tables
 
             tables.build(runs_dir=runs, out_dir=f"{a.results}/tables")
+            md = masking.summarize(f"{a.results}/masking", f"{a.results}/tables")
+            if md:
+                print(md)
 
 
 if __name__ == "__main__":
