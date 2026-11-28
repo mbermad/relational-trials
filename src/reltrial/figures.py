@@ -138,3 +138,51 @@ def pareto(runs_dir: str, out: str, tasks: Optional[List[str]] = None, split: st
     for task, p in result.items():
         p.to_csv(Path(out).with_name(f"pareto_{task}.csv"), index=False)
     return result
+
+
+def masking_bars(masking_dir: str, out: str, task: str = "study-outcome", split: str = "val",
+                 models: tuple = ("rdl_sage_hist", "lgbm_agg")) -> pd.DataFrame:
+    """Deletion test figure: metric drop when each history source is masked at inference."""
+    import json
+
+    rows = []
+    for m in models:
+        for f in sorted(Path(masking_dir, task, m).glob("seed*.json")):
+            r = json.loads(f.read_text())
+            key = "roc_auc" if "roc_auc" in r["none"][split] else "nmae"
+            for g, v in r.items():
+                if g != "none":
+                    rows.append({"model": m, "group": g,
+                                 "drop": r["none"][split][key] - v[split][key]})
+    df = pd.DataFrame(rows).groupby(["model", "group"])["drop"].mean().reset_index()
+    if df.empty:
+        return df
+    order = ["all"] + [g for g in df[df.model == models[0]].sort_values("drop", ascending=False)["group"]
+                       if g != "all"]
+    names = {"all": "All history"}
+    colors = {models[0]: FAMILY["LightGBM"], models[1]: "#c3c2b7"}  # accent + quiet grey
+    fig, ax = plt.subplots(figsize=(6.4, 0.55 * len(order) + 1.2))
+    h = 0.36
+    for j, m in enumerate(models):
+        d = df[df.model == m].set_index("group").reindex(order)["drop"].fillna(0)
+        ys = np.arange(len(order)) + (j - 0.5) * h
+        ax.barh(ys, d.clip(lower=0), height=h * 0.9, color=colors[m], label=short(m))
+        for y, v in zip(ys, d):
+            ax.text(max(v, 0) + 0.0008, y, f"{-v:+.3f}".replace("-", "−"), va="center",
+                    fontsize=7, color=INK2)
+    ax.set_yticks(np.arange(len(order)), [names.get(g, g.capitalize()) for g in order],
+                  fontsize=8, color=INK)
+    ax.invert_yaxis()
+    ax.set_xlabel(f"Drop in {split} AUROC when masked at inference", fontsize=8, color=INK2)
+    ax.set_title("Masking condition and sponsor history costs the GNN most", loc="left",
+                 fontsize=10, color=INK)
+    ax.grid(True, axis="x", color=GRID, lw=0.6)
+    ax.set_axisbelow(True)
+    for s in ("top", "right"):
+        ax.spines[s].set_visible(False)
+    ax.tick_params(colors=INK2, labelsize=7)
+    ax.legend(frameon=False, fontsize=8, loc="lower right")
+    fig.tight_layout()
+    fig.savefig(out, dpi=200, bbox_inches="tight")
+    plt.close(fig)
+    return df

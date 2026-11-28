@@ -138,6 +138,8 @@ def main() -> None:
             from reltrial import figures
 
             figures.pareto(runs, f"{a.results}/figures/pareto.png")
+            if Path(f"{a.results}/masking").exists():
+                figures.masking_bars(f"{a.results}/masking", f"{a.results}/figures/masking.png")
         elif cmd == "tables":
             from reltrial import masking, tables
 
